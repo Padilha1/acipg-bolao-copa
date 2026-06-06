@@ -16,15 +16,15 @@ function initials(value?: string | null) {
 export function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const me = useMe();
   const isLogin = location.pathname === "/login";
+  const me = useMe(!isLogin);
   const canAccessAdmin = me.data?.user.email.toLowerCase() === ADMIN_EMAIL;
 
   useEffect(() => {
-    if (!isLogin && me.isError) {
+    if (!isLogin && me.isError && !me.data) {
       navigate({ to: "/login" });
     }
-  }, [isLogin, me.isError, navigate]);
+  }, [isLogin, me.data, me.isError, navigate]);
 
   if (!isLogin && me.isLoading) {
     return <main className="mx-auto max-w-screen-sm p-4">Carregando...</main>;
