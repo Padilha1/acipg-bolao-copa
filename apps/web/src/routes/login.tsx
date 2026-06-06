@@ -26,9 +26,7 @@ export function LoginPage() {
     <section className="auth-shell">
       <div className="auth-panel">
         <div className="auth-brand">
-          <div className="auth-mark" aria-hidden="true">
-            <span className="auth-ball">⚽</span>
-          </div>
+          <img alt="Logo Acipg" src="/logo.png" width={150} height={150}></img>
           <h1 className="auth-title">Bolão ACIPG</h1>
           <p className="auth-subtitle">
             Entre para dar seus palpites na Copa 2026
