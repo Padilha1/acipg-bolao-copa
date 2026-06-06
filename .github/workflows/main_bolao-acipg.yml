@@ -36,7 +36,7 @@ jobs:
         run: pnpm --filter api build
 
       - name: Prepare deploy package
-        run: pnpm --filter api deploy --prod --legacy deploy
+        run: PNPM_CONFIG_NODE_LINKER=hoisted pnpm --filter api deploy --prod --legacy deploy
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
