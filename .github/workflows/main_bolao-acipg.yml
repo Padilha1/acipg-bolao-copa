@@ -28,24 +28,26 @@ jobs:
 
       - name: Build shared
         run: pnpm --filter @bolao-acipg/shared build
-      
+
       - name: Generate Prisma Client
         run: pnpm --filter api exec prisma generate
 
       - name: Build API
         run: pnpm --filter api build
 
+      - name: Prepare deploy package
+        run: |
+          mkdir deploy
+          cp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json deploy/
+          mkdir -p deploy/apps deploy/packages
+          cp -r apps/api deploy/apps/api
+          cp -r packages/shared deploy/packages/shared
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: |
-            package.json
-            pnpm-lock.yaml
-            pnpm-workspace.yaml
-            tsconfig.base.json
-            apps/api
-            packages/shared
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
