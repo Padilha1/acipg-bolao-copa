@@ -29,6 +29,9 @@ importers:
       '@prisma/client':
         specifier: ^6.9.0
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      cookie:
+        specifier: ^1.1.1
+        version: 1.1.1
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -38,6 +41,9 @@ importers:
       fastify-plugin:
         specifier: ^5.1.0
         version: 5.1.0
+      toad-cache:
+        specifier: ^3.7.1
+        version: 3.7.1
       zod:
         specifier: ^3.25.64
         version: 3.25.76
