@@ -15,6 +15,8 @@ import type { UserRepository } from "../repositories/user.repository.js";
 const AUTH_CODE_TTL_MINUTES = 10;
 const SESSION_TTL_DAYS = 30;
 export const SESSION_COOKIE_NAME = "bolao_session";
+const USE_SECURE_COOKIE =
+  env.NODE_ENV === "production" || env.WEB_ORIGIN.startsWith("https://");
 
 export class AuthService {
   constructor(
@@ -71,8 +73,8 @@ export class AuthService {
 
     reply?.setCookie(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: env.NODE_ENV === "production",
+      sameSite: USE_SECURE_COOKIE ? "none" : "lax",
+      secure: USE_SECURE_COOKIE,
       path: "/",
       maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
     });
