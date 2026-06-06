@@ -36,13 +36,8 @@ jobs:
         run: pnpm --filter api build
 
       - name: Prepare deploy package
-        run: |
-          mkdir deploy
-          cp package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json deploy/
-          mkdir -p deploy/apps deploy/packages
-          cp -r apps/api deploy/apps/api
-          cp -r packages/shared deploy/packages/shared
-
+        run: pnpm --filter api deploy --prod deploy
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
