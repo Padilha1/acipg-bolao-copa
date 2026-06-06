@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  name      String?    @db.VarChar(120)
+  email     String     @unique(map: "email") @db.VarChar(180)
+  role      users_role @default(participant)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime?  @updatedAt @map("updated_at") @db.Timestamp(0)
+  entries   Entry[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model AuthCode {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  email     String    @db.VarChar(180)
+  code      String    @db.VarChar(10)
+  expiresAt DateTime  @map("expires_at") @db.DateTime(0)
+  usedAt    DateTime? @map("used_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+
+  @@index([email], map: "idx_auth_codes_email")
+  @@map("auth_codes")
+}
+
+model Session {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @map("user_id") @db.UnsignedBigInt
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.DateTime(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  user      User     @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "sessions_ibfk_1")
+
+  @@index([userId], map: "user_id")
+  @@map("sessions")
+}
+
+model Pool {
+  id        BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  name      String       @db.VarChar(160)
+  status    pools_status @default(active)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamp(0)
+  entries   Entry[]
+  matches   Match[]
+  rounds    Round[]
+
+  @@map("pools")
+}
+
+model Entry {
+  id                            BigInt                         @id @default(autoincrement()) @db.UnsignedBigInt
+  userId                        BigInt                         @map("user_id") @db.UnsignedBigInt
+  poolId                        BigInt                         @map("pool_id") @db.UnsignedBigInt
+  display_name                  String                         @db.VarChar(120)
+  createdAt                     DateTime                       @default(now()) @map("created_at") @db.Timestamp(0)
+  user                          User                           @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "entries_ibfk_1")
+  pool                          Pool                           @relation(fields: [poolId], references: [id], onUpdate: Restrict, map: "entries_ibfk_2")
+  groupQualificationPredictions GroupQualificationPrediction[]
+  predictions                   Prediction[]
+
+  @@unique([userId, poolId], map: "uq_user_pool")
+  @@index([poolId], map: "pool_id")
+  @@map("entries")
+}
+
+model Team {
+  id                            BigInt                         @id @default(autoincrement()) @db.UnsignedBigInt
+  name                          String                         @db.VarChar(120)
+  code                          String                         @unique(map: "code") @db.VarChar(10)
+  group_code                    String?                        @db.Char(1)
+  created_at                    DateTime                       @default(now()) @db.Timestamp(0)
+  groupQualificationPredictions GroupQualificationPrediction[]
+  homeMatches                   Match[]                        @relation("HomeTeam")
+  awayMatches                   Match[]                        @relation("AwayTeam")
+
+  @@map("teams")
+}
+
+model Round {
+  id         BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  pool_id    BigInt       @db.UnsignedBigInt
+  name       String       @db.VarChar(80)
+  phase      rounds_phase
+  sort_order Int
+  created_at DateTime     @default(now()) @db.Timestamp(0)
+  matches    Match[]
+  pools      Pool         @relation(fields: [pool_id], references: [id], onUpdate: Restrict, map: "rounds_ibfk_1")
+
+  @@index([pool_id], map: "pool_id")
+  @@map("rounds")
+}
+
+model Match {
+  id          BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  pool_id     BigInt         @db.UnsignedBigInt
+  roundId     BigInt         @map("round_id") @db.UnsignedBigInt
+  homeTeamId  BigInt         @map("home_team_id") @db.UnsignedBigInt
+  awayTeamId  BigInt         @map("away_team_id") @db.UnsignedBigInt
+  startsAt    DateTime       @map("starts_at") @db.DateTime(0)
+  status      matches_status @default(scheduled)
+  homeScore   Int?           @map("home_score")
+  awayScore   Int?           @map("away_score")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime?      @updatedAt @map("updated_at") @db.Timestamp(0)
+  pools       Pool           @relation(fields: [pool_id], references: [id], onUpdate: Restrict, map: "matches_ibfk_1")
+  round       Round          @relation(fields: [roundId], references: [id], onUpdate: Restrict, map: "matches_ibfk_2")
+  homeTeam    Team           @relation("HomeTeam", fields: [homeTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_3")
+  awayTeam    Team           @relation("AwayTeam", fields: [awayTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_4")
+  predictions Prediction[]
+
+  @@index([awayTeamId], map: "away_team_id")
+  @@index([homeTeamId], map: "home_team_id")
+  @@index([pool_id], map: "pool_id")
+  @@index([roundId], map: "round_id")
+  @@map("matches")
+}
+
+model Prediction {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  entryId   BigInt    @map("entry_id") @db.UnsignedBigInt
+  matchId   BigInt    @map("match_id") @db.UnsignedBigInt
+  homeScore Int       @map("home_score")
+  awayScore Int       @map("away_score")
+  points    Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @updatedAt @map("updated_at") @db.Timestamp(0)
+  entry     Entry     @relation(fields: [entryId], references: [id], onUpdate: Restrict, map: "predictions_ibfk_1")
+  match     Match     @relation(fields: [matchId], references: [id], onUpdate: Restrict, map: "predictions_ibfk_2")
+
+  @@unique([entryId, matchId], map: "uq_entry_match")
+  @@index([matchId], map: "match_id")
+  @@map("predictions")
+}
+
+model GroupQualificationPrediction {
+  id                 BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  entryId            BigInt   @map("entry_id") @db.UnsignedBigInt
+  group_code         String   @db.Char(1)
+  teamId             BigInt   @map("team_id") @db.UnsignedBigInt
+  predicted_position Int
+  points             Int      @default(0)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  entry              Entry    @relation(fields: [entryId], references: [id], onUpdate: Restrict, map: "group_qualification_predictions_ibfk_1")
+  team               Team     @relation(fields: [teamId], references: [id], onUpdate: Restrict, map: "group_qualification_predictions_ibfk_2")
+
+  @@unique([entryId, group_code, predicted_position], map: "uq_entry_group_position")
+  @@unique([entryId, group_code, teamId], map: "uq_entry_group_team")
+  @@index([teamId], map: "team_id")
+  @@map("group_qualification_predictions")
+}
+
+enum pools_status {
+  draft
+  active
+  finished
+}
+
+enum rounds_phase {
+  group
+  round_32
+  round_16
+  quarter
+  semi
+  third_place
+  final
+}
+
+enum users_role {
+  admin
+  participant
+}
+
+enum matches_status {
+  scheduled
+  locked
+  finished
+}

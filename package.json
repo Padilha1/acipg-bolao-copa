@@ -1,0 +1,21 @@
+{
+  "name": "bolao-acipg",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @bolao-acipg/shared build && pnpm --parallel --filter api --filter web dev",
+    "build": "pnpm -r build",
+    "build:api": "pnpm --filter @bolao-acipg/shared build && pnpm --filter api build",
+    "build:web": "pnpm --filter @bolao-acipg/shared build && pnpm --filter web build",
+    "lint": "biome check .",
+    "format": "biome format --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.8.3"
+  }
+}
