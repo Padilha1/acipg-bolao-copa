@@ -41,6 +41,7 @@ jobs:
       - name: Generate Prisma Client in deploy package
         run: |
           cd deploy
+          pnpm add -D prisma@6.9.0
           pnpm exec prisma generate --schema=prisma/schema.prisma
       
       - name: Upload artifact
