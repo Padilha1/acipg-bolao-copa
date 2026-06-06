@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "../generated/prisma/index.js";
 import { idToString } from "../lib/serializers.js";
 
 export class PredictionRepository {

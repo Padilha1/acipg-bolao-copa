@@ -1,4 +1,4 @@
-import type { Entry, User } from "@prisma/client";
+import type { Entry, User } from "../generated/prisma/index.js";
 import { env } from "../lib/env.js";
 import { entryToDto, userToDto } from "../lib/serializers.js";
 import type { UserRepository } from "../repositories/user.repository.js";

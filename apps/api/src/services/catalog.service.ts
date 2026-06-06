@@ -1,4 +1,4 @@
-import type { Round } from "@prisma/client";
+import type { Round } from "../generated/prisma/index.js";
 import { idToString, matchToDto, teamToDto } from "../lib/serializers.js";
 import type { CatalogRepository } from "../repositories/catalog.repository.js";
 

@@ -37,19 +37,12 @@ jobs:
 
       - name: Prepare deploy package
         run: pnpm --filter api deploy --prod --legacy deploy
-        
-      - name: Generate Prisma Client in deploy package
-        run: |
-          cd deploy
-          pnpm add -D prisma@6.9.0
-          pnpm exec prisma generate --schema=prisma/schema.prisma
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
           path: deploy
-          include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest

@@ -1,4 +1,4 @@
-import type { PrismaClient, rounds_phase } from "@prisma/client";
+import type { PrismaClient, rounds_phase } from "../generated/prisma/index.js";
 import { stringToBigIntId } from "../lib/serializers.js";
 
 export class AdminRepository {

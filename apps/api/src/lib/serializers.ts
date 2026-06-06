@@ -1,4 +1,4 @@
-import type { Entry, Match, Team, User } from "@prisma/client";
+import type { Entry, Match, Team, User } from "../generated/prisma/index.js";
 
 export function idToString(id: bigint) {
   return id.toString();

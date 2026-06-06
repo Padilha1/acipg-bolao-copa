@@ -1,4 +1,4 @@
-import type { Entry, User } from "@prisma/client";
+import type { Entry, User } from "./generated/prisma/index.js";
 
 export type AuthContext = {
   user: User;
