@@ -42,11 +42,15 @@ jobs:
         working-directory: deploy
         run: npm install --omit=dev --install-strategy=hoisted --no-audit --no-fund
 
+      - name: Zip deploy package
+        working-directory: deploy
+        run: zip -rq ../api.zip .
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: deploy
+          path: api.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -73,4 +77,4 @@ jobs:
         with:
           app-name: "bolao-acipg"
           slot-name: "Production"
-          package: .
+          package: api.zip
