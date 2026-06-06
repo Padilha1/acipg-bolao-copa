@@ -12,12 +12,18 @@ export class AuthController {
   start = async (request: FastifyRequest, reply: FastifyReply) => {
     const body = authStartSchema.parse(request.body);
     const auth = await this.authService.start(body.email, body.name, reply);
-    return this.meService.toDto(auth.user, auth.entry);
+    return {
+      ...this.meService.toDto(auth.user, auth.entry),
+      sessionToken: auth.sessionToken,
+    };
   };
 
   verify = async (request: FastifyRequest, reply: FastifyReply) => {
     const body = authVerifySchema.parse(request.body);
     const auth = await this.authService.verify(body.email, body.code, reply);
-    return this.meService.toDto(auth.user, auth.entry);
+    return {
+      ...this.meService.toDto(auth.user, auth.entry),
+      sessionToken: auth.sessionToken,
+    };
   };
 }

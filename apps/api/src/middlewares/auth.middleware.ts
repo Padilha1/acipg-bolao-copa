@@ -8,8 +8,12 @@ import {
 
 export function makeRequireAuth(authService: AuthService) {
   return async function requireAuth(request: FastifyRequest) {
+    const bearerToken = request.headers.authorization?.match(
+      /^Bearer\s+(.+)$/i,
+    )?.[1];
+
     request.auth = await authService.authenticate(
-      request.cookies[SESSION_COOKIE_NAME],
+      request.cookies[SESSION_COOKIE_NAME] ?? bearerToken,
     );
   };
 }

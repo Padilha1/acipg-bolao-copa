@@ -17,81 +17,6 @@ function initials(name: string) {
     .join("");
 }
 
-function fallbackRows(): RankingRow[] {
-  return [
-    {
-      position: 1,
-      entryId: "demo-1",
-      userId: "demo-1",
-      name: "Carla Mendes",
-      points: 158,
-    },
-    {
-      position: 2,
-      entryId: "demo-2",
-      userId: "demo-2",
-      name: "Ricardo M.",
-      points: 142,
-    },
-    {
-      position: 3,
-      entryId: "demo-3",
-      userId: "demo-3",
-      name: "Fabio L.",
-      points: 138,
-    },
-    {
-      position: 4,
-      entryId: "demo-4",
-      userId: "demo-4",
-      name: "Guilherme S.",
-      points: 135,
-    },
-    {
-      position: 5,
-      entryId: "demo-5",
-      userId: "demo-5",
-      name: "Beatriz Santos",
-      points: 132,
-    },
-    {
-      position: 6,
-      entryId: "demo-6",
-      userId: "demo-6",
-      name: "Rodrigo Mello",
-      points: 130,
-    },
-    {
-      position: 7,
-      entryId: "demo-7",
-      userId: "demo-7",
-      name: "Luciana Costa",
-      points: 128,
-    },
-    {
-      position: 8,
-      entryId: "demo-8",
-      userId: "demo-8",
-      name: "Helio Junior",
-      points: 125,
-    },
-    {
-      position: 9,
-      entryId: "demo-9",
-      userId: "demo-9",
-      name: "Marcos Paulo",
-      points: 122,
-    },
-    {
-      position: 10,
-      entryId: "demo-10",
-      userId: "demo-10",
-      name: "Patricia K.",
-      points: 120,
-    },
-  ];
-}
-
 function TopPlayer({
   row,
   variant,
@@ -120,8 +45,7 @@ function TopPlayer({
 export function RankingPage() {
   const me = useMe();
   const ranking = useRanking();
-  const rows =
-    ranking.data && ranking.data.length > 0 ? ranking.data : fallbackRows();
+  const rows = ranking.data ?? [];
   const myEntryId = me.data?.entry?.id;
   const hasMeInRanking = rows.some((row) => row.entryId === myEntryId);
   const myFallbackPosition = rows.length + 1;
@@ -167,6 +91,9 @@ export function RankingPage() {
           <span>Participante</span>
           <span>Pts</span>
         </div>
+        {tableRows.length === 0 ? (
+          <p className="home-empty-card">Ranking ainda sem pontuação.</p>
+        ) : null}
         {tableRows.map((row) => {
           const isMe = row.entryId === myEntryId;
           return (

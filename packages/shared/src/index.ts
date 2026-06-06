@@ -81,6 +81,10 @@ export type MeDto = {
   entry: EntryDto | null;
 };
 
+export type AuthSessionDto = MeDto & {
+  sessionToken: string;
+};
+
 export type TeamDto = {
   id: string;
   fifaCode: string;

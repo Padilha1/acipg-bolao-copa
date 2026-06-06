@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useState } from "react";
-import { apiClient } from "../lib/api";
+import { apiClient, setSessionToken } from "../lib/api";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -11,7 +11,8 @@ export function LoginPage() {
 
   const start = useMutation({
     mutationFn: apiClient.startAuth,
-    onSuccess: (me) => {
+    onSuccess: ({ sessionToken, ...me }) => {
+      setSessionToken(sessionToken);
       queryClient.setQueryData(["me"], me);
       navigate({ replace: true, to: "/" });
     },

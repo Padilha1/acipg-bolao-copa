@@ -79,7 +79,7 @@ export class AuthService {
       maxAge: SESSION_TTL_DAYS * 24 * 60 * 60,
     });
 
-    return { user, entry };
+    return { user, entry, sessionToken: token };
   }
 
   async authenticate(token?: string) {
