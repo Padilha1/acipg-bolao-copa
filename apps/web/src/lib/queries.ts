@@ -7,6 +7,7 @@ export function useMe(enabled = true) {
     queryFn: apiClient.me,
     enabled,
     retry: false,
+    staleTime: 60_000,
   });
 }
 

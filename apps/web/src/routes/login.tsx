@@ -13,7 +13,7 @@ export function LoginPage() {
     mutationFn: apiClient.startAuth,
     onSuccess: (me) => {
       queryClient.setQueryData(["me"], me);
-      navigate({ to: "/" });
+      navigate({ replace: true, to: "/" });
     },
   });
 
