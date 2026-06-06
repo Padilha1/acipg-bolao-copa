@@ -36,7 +36,11 @@ jobs:
         run: pnpm --filter api build
 
       - name: Prepare deploy package
-        run: PNPM_CONFIG_NODE_LINKER=hoisted pnpm --filter api deploy --prod --legacy deploy
+        run: node apps/api/scripts/prepare-azure-deploy.mjs
+
+      - name: Install deploy dependencies
+        working-directory: deploy
+        run: npm install --omit=dev --install-strategy=hoisted --no-audit --no-fund
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
