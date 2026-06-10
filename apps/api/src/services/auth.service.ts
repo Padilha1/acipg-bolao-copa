@@ -6,7 +6,7 @@ import {
   hashSecret,
   safeCompare,
 } from "../lib/crypto.js";
-import { env } from "../lib/env.js";
+import { env, webOrigins } from "../lib/env.js";
 import { HttpError } from "../lib/http-error.js";
 import type { AuthRepository } from "../repositories/auth.repository.js";
 import type { PoolRepository } from "../repositories/pool.repository.js";
@@ -16,7 +16,8 @@ const AUTH_CODE_TTL_MINUTES = 10;
 const SESSION_TTL_DAYS = 30;
 export const SESSION_COOKIE_NAME = "bolao_session";
 const USE_SECURE_COOKIE =
-  env.NODE_ENV === "production" || env.WEB_ORIGIN.startsWith("https://");
+  env.NODE_ENV === "production" ||
+  webOrigins.some((origin) => origin.startsWith("https://"));
 
 export class AuthService {
   constructor(

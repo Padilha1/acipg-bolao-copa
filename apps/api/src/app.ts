@@ -7,7 +7,7 @@ import { AuthController } from "./controllers/auth.controller.js";
 import { CatalogController } from "./controllers/catalog.controller.js";
 import { MeController } from "./controllers/me.controller.js";
 import { PredictionController } from "./controllers/prediction.controller.js";
-import { env } from "./lib/env.js";
+import { env, webOrigins } from "./lib/env.js";
 import { HttpError } from "./lib/http-error.js";
 import {
   emailLogFields,
@@ -40,7 +40,7 @@ export async function buildApp() {
   });
 
   await app.register(cors, {
-    origin: env.WEB_ORIGIN,
+    origin: webOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

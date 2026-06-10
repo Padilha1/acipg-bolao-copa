@@ -23,3 +23,14 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
+
+export const webOrigins = env.WEB_ORIGIN.split(",").map((origin) => {
+  const normalizedOrigin = origin.trim().replace(/\/+$/, "");
+  const parsedOrigin = new URL(normalizedOrigin);
+
+  if (parsedOrigin.origin !== normalizedOrigin) {
+    throw new Error(`WEB_ORIGIN must contain only origins: ${origin}`);
+  }
+
+  return normalizedOrigin;
+});
