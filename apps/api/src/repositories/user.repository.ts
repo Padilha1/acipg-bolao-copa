@@ -10,11 +10,14 @@ export class UserRepository {
   }
 
   async upsertByEmail(email: string, name?: string) {
-    const existing = await this.findByEmail(email);
-    if (existing) return existing;
-
-    return this.db.user.create({
-      data: { email, name: name ?? null, role: "participant" },
+    return this.db.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        name: name ?? null,
+        role: "participant",
+      },
     });
   }
 

@@ -9,6 +9,12 @@ import { MeController } from "./controllers/me.controller.js";
 import { PredictionController } from "./controllers/prediction.controller.js";
 import { env } from "./lib/env.js";
 import { HttpError } from "./lib/http-error.js";
+import {
+  emailLogFields,
+  errorLogFields,
+  logError,
+  logWarn,
+} from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
 import { makeRequireAuth } from "./middlewares/auth.middleware.js";
 import { AdminRepository } from "./repositories/admin.repository.js";
@@ -75,8 +81,21 @@ export async function buildApp() {
 
   app.get("/health", async () => ({ ok: true }));
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error, request, reply) => {
+    const body = request.body as { email?: unknown } | undefined;
+    const baseLogFields = {
+      requestId: request.id,
+      method: request.method,
+      url: request.url,
+      ...emailLogFields(body?.email),
+    };
+
     if (error instanceof ZodError) {
+      logWarn("request.validation_failed", {
+        ...baseLogFields,
+        issues: error.flatten(),
+      });
+
       return reply.status(400).send({
         message: "Dados invalidos.",
         issues: error.flatten(),
@@ -84,12 +103,22 @@ export async function buildApp() {
     }
 
     if (error instanceof HttpError) {
+      logWarn("request.http_error", {
+        ...baseLogFields,
+        statusCode: error.statusCode,
+        message: error.message,
+      });
+
       return reply.status(error.statusCode).send({
         message: error.message,
       });
     }
 
-    console.error(error);
+    logError("request.unhandled_error", {
+      ...baseLogFields,
+      ...errorLogFields(error),
+    });
+
     return reply.status(500).send({
       message: "Erro interno.",
     });
