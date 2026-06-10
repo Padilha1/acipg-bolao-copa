@@ -15,7 +15,7 @@ const envSchema = z.object({
     .string()
     .email()
     .transform((value) => value.toLowerCase()),
-  WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+  WEB_ORIGIN: z.string().min(1).default("http://localhost:5173"),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
@@ -24,13 +24,21 @@ const envSchema = z.object({
 
 export const env = envSchema.parse(process.env);
 
-export const webOrigins = env.WEB_ORIGIN.split(",").map((origin) => {
-  const normalizedOrigin = origin.trim().replace(/\/+$/, "");
-  const parsedOrigin = new URL(normalizedOrigin);
+export const webOrigins = env.WEB_ORIGIN.split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean)
+  .map((normalizedOrigin) => {
+    const parsedOrigin = new URL(normalizedOrigin);
 
-  if (parsedOrigin.origin !== normalizedOrigin) {
-    throw new Error(`WEB_ORIGIN must contain only origins: ${origin}`);
-  }
+    if (parsedOrigin.origin !== normalizedOrigin) {
+      throw new Error(
+        `WEB_ORIGIN must contain only origins: ${normalizedOrigin}`,
+      );
+    }
 
-  return normalizedOrigin;
-});
+    return normalizedOrigin;
+  });
+
+if (webOrigins.length === 0) {
+  throw new Error("WEB_ORIGIN must contain at least one origin.");
+}
