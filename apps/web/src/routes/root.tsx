@@ -79,6 +79,15 @@ export function AppLayout() {
             <span aria-hidden="true">▥</span>
             <span>Ranking</span>
           </Link>
+          <Link
+            className={`bottom-nav-item ${
+              location.pathname === "/general" ? "is-active" : ""
+            }`}
+            to="/general"
+          >
+            <span aria-hidden="true">◎</span>
+            <span>Geral</span>
+          </Link>
           {canAccessAdmin ? (
             <Link
               className={`bottom-nav-item ${location.pathname === "/admin" ? "is-active" : ""}`}

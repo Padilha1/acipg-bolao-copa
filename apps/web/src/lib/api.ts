@@ -1,5 +1,8 @@
 import type {
   AuthSessionDto,
+  LeaderboardPodiumPredictionDto,
+  LeaderboardPodiumPredictionInput,
+  LeaderboardPodiumVoteRowDto,
   MatchDto,
   MeDto,
   PredictionDto,
@@ -60,6 +63,20 @@ export const apiClient = {
       .put(`predictions/${matchId}`, { json: { homeScore, awayScore } })
       .json<PredictionDto>(),
   ranking: () => api.get("ranking").json<RankingRowDto[]>(),
+  leaderboardPodiumPrediction: () =>
+    api
+      .get("leaderboard-podium-prediction/me")
+      .json<LeaderboardPodiumPredictionDto | null>(),
+  leaderboardPodiumVoteRanking: () =>
+    api
+      .get("leaderboard-podium-prediction/top")
+      .json<LeaderboardPodiumVoteRowDto[]>(),
+  saveLeaderboardPodiumPrediction: (
+    input: LeaderboardPodiumPredictionInput,
+  ) =>
+    api
+      .put("leaderboard-podium-prediction/me", { json: input })
+      .json<LeaderboardPodiumPredictionDto>(),
   createRound: (input: { name: string; kind: string; order: number }) =>
     api.post("admin/rounds", { json: input }).json<RoundDto>(),
   createMatch: (input: {

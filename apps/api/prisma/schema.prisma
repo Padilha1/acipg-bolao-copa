@@ -66,6 +66,10 @@ model Entry {
   user                          User                           @relation(fields: [userId], references: [id], onUpdate: Restrict, map: "entries_ibfk_1")
   pool                          Pool                           @relation(fields: [poolId], references: [id], onUpdate: Restrict, map: "entries_ibfk_2")
   groupQualificationPredictions GroupQualificationPrediction[]
+  leaderboardPodiumPrediction   LeaderboardPodiumPrediction?
+  predictedAsFirst              LeaderboardPodiumPrediction[]  @relation("PredictedFirstEntry")
+  predictedAsSecond             LeaderboardPodiumPrediction[]  @relation("PredictedSecondEntry")
+  predictedAsThird              LeaderboardPodiumPrediction[]   @relation("PredictedThirdEntry")
   predictions                   Prediction[]
 
   @@unique([userId, poolId], map: "uq_user_pool")
@@ -157,6 +161,25 @@ model GroupQualificationPrediction {
   @@unique([entryId, group_code, teamId], map: "uq_entry_group_team")
   @@index([teamId], map: "team_id")
   @@map("group_qualification_predictions")
+}
+
+model LeaderboardPodiumPrediction {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  entryId       BigInt    @unique(map: "uq_leaderboard_podium_entry") @map("entry_id") @db.UnsignedBigInt
+  firstEntryId  BigInt    @map("first_entry_id") @db.UnsignedBigInt
+  secondEntryId BigInt    @map("second_entry_id") @db.UnsignedBigInt
+  thirdEntryId  BigInt    @map("third_entry_id") @db.UnsignedBigInt
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime? @updatedAt @map("updated_at") @db.Timestamp(0)
+  entry         Entry     @relation(fields: [entryId], references: [id], onUpdate: Restrict, map: "leaderboard_podium_predictions_ibfk_1")
+  firstEntry    Entry     @relation("PredictedFirstEntry", fields: [firstEntryId], references: [id], onUpdate: Restrict, map: "leaderboard_podium_predictions_ibfk_2")
+  secondEntry   Entry     @relation("PredictedSecondEntry", fields: [secondEntryId], references: [id], onUpdate: Restrict, map: "leaderboard_podium_predictions_ibfk_3")
+  thirdEntry    Entry     @relation("PredictedThirdEntry", fields: [thirdEntryId], references: [id], onUpdate: Restrict, map: "leaderboard_podium_predictions_ibfk_4")
+
+  @@index([firstEntryId], map: "first_entry_id")
+  @@index([secondEntryId], map: "second_entry_id")
+  @@index([thirdEntryId], map: "third_entry_id")
+  @@map("leaderboard_podium_predictions")
 }
 
 enum pools_status {

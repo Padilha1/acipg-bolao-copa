@@ -1,4 +1,4 @@
-import type { MatchDto } from "@bolao-acipg/shared";
+import type { MatchDto, PredictionDto } from "@bolao-acipg/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { TeamFlag } from "../components/team-flag";
@@ -136,13 +136,27 @@ export function MatchesPage() {
         );
       });
 
-      await Promise.all(
+      return Promise.all(
         openDrafts.map(([matchId, score]) =>
           apiClient.savePrediction(matchId, score.homeScore, score.awayScore),
         ),
       );
     },
-    onSuccess: async () => {
+    onSuccess: async (savedPredictions) => {
+      queryClient.setQueryData<PredictionDto[]>(["predictions"], (current) => {
+        const currentByMatch = new Map(
+          (current ?? []).map((prediction) => [
+            prediction.matchId,
+            prediction,
+          ]),
+        );
+
+        for (const prediction of savedPredictions) {
+          currentByMatch.set(prediction.matchId, prediction);
+        }
+
+        return [...currentByMatch.values()];
+      });
       setScores({});
       await queryClient.invalidateQueries({ queryKey: ["predictions"] });
     },
@@ -229,6 +243,12 @@ export function MatchesPage() {
                 const isLocked = new Date(match.startsAt) <= new Date();
                 const hasPrediction = Boolean(prediction);
                 const isFinished = match.status === "finished";
+                const isSaving =
+                  saveAll.isPending &&
+                  Boolean(scores[match.id]) &&
+                  (!prediction ||
+                    prediction.homeScore !== current.homeScore ||
+                    prediction.awayScore !== current.awayScore);
 
                 return (
                   <article
@@ -251,6 +271,8 @@ export function MatchesPage() {
                       <span className="bet-status">
                         {isLocked
                           ? "▣ Encerrado"
+                          : isSaving
+                            ? "Salvando..."
                           : hasPrediction
                             ? "◉ Palpite Salvo"
                             : "◴ Aberto"}
@@ -342,7 +364,7 @@ export function MatchesPage() {
         onClick={() => saveAll.mutate()}
         type="button"
       >
-        ▣ Salvar Todos os Palpites
+        {saveAll.isPending ? "Salvando..." : "▣ Salvar Todos os Palpites"}
       </button>
     </section>
   );
