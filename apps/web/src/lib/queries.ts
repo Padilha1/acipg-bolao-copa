@@ -32,6 +32,20 @@ export function useRanking() {
   });
 }
 
+export function useLeaderboardPodiumPrediction() {
+  return useQuery({
+    queryKey: ["leaderboard-podium-prediction"],
+    queryFn: apiClient.leaderboardPodiumPrediction,
+  });
+}
+
+export function useLeaderboardPodiumVoteRanking() {
+  return useQuery({
+    queryKey: ["leaderboard-podium-vote-ranking"],
+    queryFn: apiClient.leaderboardPodiumVoteRanking,
+  });
+}
+
 export function useRounds() {
   return useQuery({
     queryKey: ["rounds"],

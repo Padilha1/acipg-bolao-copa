@@ -1545,6 +1545,183 @@ button:disabled {
   margin: 0;
 }
 
+.general-votes-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  box-shadow: var(--shadow-card);
+  margin-top: 1.5rem;
+  padding: 1.15rem;
+}
+
+.general-votes-head {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.9rem;
+}
+
+.general-votes-head span {
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.general-votes-head strong {
+  color: var(--color-primary-strong);
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.general-votes-podium {
+  align-items: end;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.general-vote-player {
+  background: #eef4ff;
+  border: 1px solid #d4deee;
+  border-radius: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  min-height: 8.4rem;
+  padding: 0.75rem 0.55rem;
+  text-align: center;
+}
+
+.general-vote-player-1 {
+  background: var(--color-primary-strong);
+  color: white;
+  min-height: 9.5rem;
+}
+
+.general-vote-avatar {
+  align-items: center;
+  background: white;
+  border-radius: 999px;
+  color: var(--color-primary-strong);
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 850;
+  height: 3rem;
+  justify-content: center;
+  position: relative;
+  width: 3rem;
+}
+
+.general-vote-avatar span {
+  align-items: center;
+  background: var(--color-secondary);
+  border-radius: 999px;
+  bottom: -0.2rem;
+  color: #111827;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 900;
+  height: 1.3rem;
+  justify-content: center;
+  position: absolute;
+  right: -0.25rem;
+  width: 1.3rem;
+}
+
+.general-vote-player strong {
+  color: inherit;
+  font-size: clamp(0.78rem, 3vw, 1rem);
+  font-weight: 850;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.general-vote-player em {
+  color: inherit;
+  font-size: 0.95rem;
+  font-style: normal;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.general-prediction-card {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  box-shadow: var(--shadow-card);
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+}
+
+.general-prediction-head {
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  margin: -0.1rem 0 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.general-prediction-head span {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.general-prediction-head strong {
+  color: var(--color-primary-strong);
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+
+.podium-prediction-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.podium-prediction-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.podium-prediction-field span {
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.podium-prediction-field select {
+  appearance: none;
+  background: #eef4ff;
+  border: 1px solid #c8d2e5;
+  border-radius: 0.55rem;
+  color: #111827;
+  min-height: 3.3rem;
+  padding: 0 0.9rem;
+  width: 100%;
+}
+
+.general-prediction-save {
+  background: var(--color-primary-strong);
+  border: 0;
+  border-radius: 0.75rem;
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-top: 1.25rem;
+  min-height: 3.6rem;
+  width: 100%;
+}
+
 .bottom-nav {
   align-items: center;
   background: #f8f9ff;
@@ -1552,7 +1729,7 @@ button:disabled {
   bottom: 0;
   display: grid;
   gap: 0.25rem;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(4.2rem, 1fr));
   left: 50%;
   max-width: 40rem;
   min-height: 6.1rem;

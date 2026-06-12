@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute } from "@tanstack/react-router";
 import { AdminPage } from "./routes/admin";
+import { GeneralPredictionPage } from "./routes/general-prediction";
 import { HomePage } from "./routes/index";
 import { LoginPage } from "./routes/login";
 import { MatchesPage } from "./routes/matches";
@@ -34,6 +35,12 @@ const Ranking = createRoute({
   component: RankingPage,
 });
 
+const GeneralPrediction = createRoute({
+  path: "/general",
+  getParentRoute: () => RootRoute,
+  component: GeneralPredictionPage,
+});
+
 const Admin = createRoute({
   path: "/admin",
   getParentRoute: () => RootRoute,
@@ -45,5 +52,6 @@ export const routeTree = RootRoute.addChildren([
   Login,
   Matches,
   Ranking,
+  GeneralPrediction,
   Admin,
 ]);

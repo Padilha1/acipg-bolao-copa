@@ -59,9 +59,9 @@ export function RankingPage() {
             name: me.data.user.name ?? me.data.user.email,
             points: me.data.entry?.points ?? 0,
           },
-          ...rows.slice(3, 10),
+          ...rows.slice(3),
         ]
-      : rows.slice(3, 10);
+      : rows.slice(3);
 
   return (
     <section className="home-screen">

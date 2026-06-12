@@ -52,4 +52,71 @@ export class PredictionService {
   ranking() {
     return this.predictionRepository.ranking();
   }
+
+  async leaderboardPodiumVoteRanking() {
+    const rows =
+      await this.predictionRepository.leaderboardPodiumVoteRanking();
+
+    return rows.map((row, index) => ({
+      position: index + 1,
+      entryId: idToString(row.entryId),
+      userId: idToString(row.userId),
+      name: row.name,
+      votes: Number(row.votes),
+    }));
+  }
+
+  async getLeaderboardPodiumPrediction(entryId: bigint) {
+    const prediction =
+      await this.predictionRepository.findLeaderboardPodiumPrediction(entryId);
+
+    if (!prediction) return null;
+
+    return {
+      id: idToString(prediction.id),
+      entryId: idToString(prediction.entryId),
+      firstEntryId: idToString(prediction.firstEntryId),
+      secondEntryId: idToString(prediction.secondEntryId),
+      thirdEntryId: idToString(prediction.thirdEntryId),
+      updatedAt: prediction.updatedAt?.toISOString() ?? null,
+    };
+  }
+
+  async upsertLeaderboardPodiumPrediction(
+    entryId: bigint,
+    input: {
+      firstEntryId: string;
+      secondEntryId: string;
+      thirdEntryId: string;
+    },
+  ) {
+    const entryIds = [
+      stringToBigIntId(input.firstEntryId),
+      stringToBigIntId(input.secondEntryId),
+      stringToBigIntId(input.thirdEntryId),
+    ];
+    const existingEntries =
+      await this.predictionRepository.listEntriesByIds(entryIds);
+
+    if (existingEntries.length !== entryIds.length) {
+      throw new HttpError(404, "Participante selecionado nao encontrado.");
+    }
+
+    const prediction =
+      await this.predictionRepository.upsertLeaderboardPodiumPrediction({
+        entryId,
+        firstEntryId: entryIds[0],
+        secondEntryId: entryIds[1],
+        thirdEntryId: entryIds[2],
+      });
+
+    return {
+      id: idToString(prediction.id),
+      entryId: idToString(prediction.entryId),
+      firstEntryId: idToString(prediction.firstEntryId),
+      secondEntryId: idToString(prediction.secondEntryId),
+      thirdEntryId: idToString(prediction.thirdEntryId),
+      updatedAt: prediction.updatedAt?.toISOString() ?? null,
+    };
+  }
 }

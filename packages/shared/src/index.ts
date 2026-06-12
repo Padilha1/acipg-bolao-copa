@@ -22,6 +22,19 @@ export const predictionInputSchema = z.object({
   awayScore: z.coerce.number().int().min(0).max(99),
 });
 
+export const leaderboardPodiumPredictionInputSchema = z
+  .object({
+    firstEntryId: z.string().regex(/^\d+$/),
+    secondEntryId: z.string().regex(/^\d+$/),
+    thirdEntryId: z.string().regex(/^\d+$/),
+  })
+  .refine(
+    (input) =>
+      new Set([input.firstEntryId, input.secondEntryId, input.thirdEntryId])
+        .size === 3,
+    "Escolha participantes diferentes para cada posicao.",
+  );
+
 export const createRoundSchema = z.object({
   name: z.string().trim().min(1).max(80),
   kind: z
@@ -57,6 +70,9 @@ export type AuthStartInput = z.infer<typeof authStartSchema>;
 export type AuthVerifyInput = z.infer<typeof authVerifySchema>;
 export type UpdateMeInput = z.infer<typeof updateMeSchema>;
 export type PredictionInput = z.infer<typeof predictionInputSchema>;
+export type LeaderboardPodiumPredictionInput = z.infer<
+  typeof leaderboardPodiumPredictionInputSchema
+>;
 export type CreateRoundInput = z.infer<typeof createRoundSchema>;
 export type CreateMatchInput = z.infer<typeof createMatchSchema>;
 export type UpdateMatchInput = z.infer<typeof updateMatchSchema>;
@@ -126,4 +142,21 @@ export type RankingRowDto = {
   userId: string;
   name: string;
   points: number;
+};
+
+export type LeaderboardPodiumPredictionDto = {
+  id: string;
+  entryId: string;
+  firstEntryId: string;
+  secondEntryId: string;
+  thirdEntryId: string;
+  updatedAt: string | null;
+};
+
+export type LeaderboardPodiumVoteRowDto = {
+  position: number;
+  entryId: string;
+  userId: string;
+  name: string;
+  votes: number;
 };
