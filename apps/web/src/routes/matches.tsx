@@ -1,6 +1,6 @@
 import type { MatchDto, PredictionDto } from "@bolao-acipg/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TeamFlag } from "../components/team-flag";
 import { apiClient } from "../lib/api";
 import { useMatches, usePredictions } from "../lib/queries";
@@ -84,6 +84,7 @@ export function MatchesPage() {
   const queryClient = useQueryClient();
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [dayIndex, setDayIndex] = useState(0);
+  const hasAutoSelectedDay = useRef(false);
 
   const predictionByMatchId = useMemo(
     () =>
@@ -116,6 +117,28 @@ export function MatchesPage() {
         ),
       }));
   }, [matches.data]);
+
+  useEffect(() => {
+    if (hasAutoSelectedDay.current || groupedMatches.length === 0) return;
+
+    const todayKey = getDayKey(new Date().toISOString());
+    const todayIndex = groupedMatches.findIndex(
+      (group) => group.key === todayKey,
+    );
+    const nextIndex = groupedMatches.findIndex(
+      (group) => group.key > todayKey,
+    );
+
+    setDayIndex(
+      todayIndex >= 0
+        ? todayIndex
+        : nextIndex >= 0
+          ? nextIndex
+          : groupedMatches.length - 1,
+    );
+    hasAutoSelectedDay.current = true;
+  }, [groupedMatches]);
+
   const selectedDayIndex = Math.min(
     dayIndex,
     Math.max(groupedMatches.length - 1, 0),
