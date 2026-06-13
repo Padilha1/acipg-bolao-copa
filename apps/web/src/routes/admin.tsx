@@ -135,7 +135,12 @@ export function AdminPage() {
   const resultMatches =
     matches.data
       ?.filter((item) => new Date(item.startsAt) <= new Date())
-      .slice(0, 4) ?? [];
+      .slice()
+      .sort(
+        (left, right) =>
+          new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
+      )
+      .slice(0, 8) ?? [];
 
   function resultDraft(matchItem: MatchDto) {
     return (
@@ -372,6 +377,7 @@ export function AdminPage() {
                 <div className="admin-result-head">
                   <span>
                     {groupLabel(item)} •{" "}
+                    {formatAdminDate(item.startsAt)} •{" "}
                     {isSaved ? "Encerrado" : "Em andamento"}
                   </span>
                   <strong className={isSaved ? "" : "pending"}>
