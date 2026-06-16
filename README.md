@@ -55,5 +55,6 @@ O login inicial e feito com nome + email:
 1. `POST /auth/start` recebe `name` e `email`.
 2. A API cria ou atualiza o usuario, cria a entry padrao se necessario e seta cookie `httpOnly`.
 3. `users.name` e usado no ranking.
+'
 
-O admin e definido por `ADMIN_EMAIL`. No frontend, o item Admin do menu aparece apenas para `padilha.matheus@hotmail.com`.
+[![Made in Brazil](https://selo.feitonobrasil.dev.br/en/colorido/1x.svg)](https://feitonobrasil.dev.br)
