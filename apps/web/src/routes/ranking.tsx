@@ -85,6 +85,15 @@ export function RankingPage() {
         </button>
       </div>
 
+      <section className="home-sponsors" aria-label="Nossos patrocinadores">
+        <span>Nossos patrocinadores</span>
+        <div className="home-sponsor-list">
+          <img src="/mudra.png" alt="Mudra" />
+          <img src="/pacoloco.png" alt="Paco Loco" />
+          <img src="/stelarosa.jpeg" alt="Stela Rosa" />
+        </div>
+      </section>
+
       <div className="ranking-card">
         <div className="ranking-head">
           <span>#</span>

@@ -25,6 +25,12 @@ const POSITIONS = [
   { key: "thirdEntryId", label: "3º lugar" },
 ] as const;
 
+const POSITION_LABELS = {
+  1: "1º lugar",
+  2: "2º lugar",
+  3: "3º lugar",
+} as const;
+
 function initials(name: string) {
   return name
     .split(" ")
@@ -90,7 +96,7 @@ export function GeneralPredictionPage() {
 
       <section className="general-votes-card">
         <div className="general-votes-head">
-          <span>Mais votados até agora</span>
+          <span>Mais votados por posição</span>
           <strong>Top 3</strong>
         </div>
 
@@ -105,6 +111,11 @@ export function GeneralPredictionPage() {
                   {initials(row.name)}
                   <span>{row.position}</span>
                 </div>
+                <small>
+                  {POSITION_LABELS[
+                    row.position as keyof typeof POSITION_LABELS
+                  ] ?? `${row.position}º lugar`}
+                </small>
                 <strong>{row.name}</strong>
                 <em>
                   {row.votes} {row.votes === 1 ? "voto" : "votos"}

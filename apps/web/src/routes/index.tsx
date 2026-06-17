@@ -147,6 +147,15 @@ export function HomePage() {
         </Link>
       </section>
 
+      <section className="home-sponsors" aria-label="Nossos patrocinadores">
+        <span>Nossos patrocinadores</span>
+        <div className="home-sponsor-list">
+          <img src="/mudra.png" alt="Mudra" />
+          <img src="/pacoloco.png" alt="Paco Loco" />
+          <img src="/stelarosa.jpeg" alt="Stela Rosa" />
+        </div>
+      </section>
+
       <section className="home-section">
         <div className="home-section-heading">
           <h2>▥ Top 5 Ranking</h2>

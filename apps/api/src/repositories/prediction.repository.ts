@@ -11,6 +11,7 @@ type LeaderboardPodiumPredictionRow = {
 };
 
 type LeaderboardPodiumVoteRow = {
+  podiumPosition: bigint | number | string;
   entryId: bigint;
   userId: bigint;
   name: string;
@@ -93,26 +94,51 @@ export class PredictionRepository {
 
   async leaderboardPodiumVoteRanking() {
     return this.db.$queryRaw<LeaderboardPodiumVoteRow[]>`
-      select
-        e.id as entryId,
-        e.user_id as userId,
-        coalesce(u.name, e.display_name, u.email) as name,
-        count(*) as votes
-      from (
-        select first_entry_id as voted_entry_id
-        from leaderboard_podium_predictions
-        union all
-        select second_entry_id as voted_entry_id
-        from leaderboard_podium_predictions
-        union all
-        select third_entry_id as voted_entry_id
-        from leaderboard_podium_predictions
-      ) votes
-      inner join entries e on e.id = votes.voted_entry_id
-      inner join users u on u.id = e.user_id
-      group by e.id, e.user_id, u.name, e.display_name, u.email
-      order by votes desc, name asc
-      limit 3
+      select * from (
+        select
+          1 as podiumPosition,
+          e.id as entryId,
+          e.user_id as userId,
+          coalesce(u.name, e.display_name, u.email) as name,
+          count(*) as votes
+        from leaderboard_podium_predictions votes
+        inner join entries e on e.id = votes.first_entry_id
+        inner join users u on u.id = e.user_id
+        group by e.id, e.user_id, u.name, e.display_name, u.email
+        order by votes desc, name asc
+        limit 1
+      ) first_position
+      union all
+      select * from (
+        select
+          2 as podiumPosition,
+          e.id as entryId,
+          e.user_id as userId,
+          coalesce(u.name, e.display_name, u.email) as name,
+          count(*) as votes
+        from leaderboard_podium_predictions votes
+        inner join entries e on e.id = votes.second_entry_id
+        inner join users u on u.id = e.user_id
+        group by e.id, e.user_id, u.name, e.display_name, u.email
+        order by votes desc, name asc
+        limit 1
+      ) second_position
+      union all
+      select * from (
+        select
+          3 as podiumPosition,
+          e.id as entryId,
+          e.user_id as userId,
+          coalesce(u.name, e.display_name, u.email) as name,
+          count(*) as votes
+        from leaderboard_podium_predictions votes
+        inner join entries e on e.id = votes.third_entry_id
+        inner join users u on u.id = e.user_id
+        group by e.id, e.user_id, u.name, e.display_name, u.email
+        order by votes desc, name asc
+        limit 1
+      ) third_position
+      order by podiumPosition asc
     `;
   }
 

@@ -257,6 +257,43 @@ button:disabled {
   text-transform: uppercase;
 }
 
+.home-sponsors {
+  background: rgb(255 255 255 / 58%);
+  border: 1px solid rgb(184 196 187 / 72%);
+  border-radius: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.85rem 0.9rem 0.95rem;
+}
+
+.home-sponsors > span {
+  color: var(--color-muted);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  margin-bottom: 0.7rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.home-sponsor-list {
+  align-items: center;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home-sponsor-list img {
+  background: white;
+  border: 1px solid rgb(184 196 187 / 44%);
+  border-radius: 0.5rem;
+  height: 3.9rem;
+  max-width: 100%;
+  object-fit: contain;
+  padding: 0.55rem;
+  width: 100%;
+}
+
 .home-section-heading {
   align-items: center;
   display: flex;
@@ -1641,6 +1678,15 @@ button:disabled {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.general-vote-player small {
+  color: inherit;
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+  text-transform: uppercase;
 }
 
 .general-vote-player em {

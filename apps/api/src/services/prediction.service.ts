@@ -57,8 +57,8 @@ export class PredictionService {
     const rows =
       await this.predictionRepository.leaderboardPodiumVoteRanking();
 
-    return rows.map((row, index) => ({
-      position: index + 1,
+    return rows.map((row) => ({
+      position: Number(row.podiumPosition),
       entryId: idToString(row.entryId),
       userId: idToString(row.userId),
       name: row.name,
