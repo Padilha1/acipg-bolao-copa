@@ -91,6 +91,7 @@ export function RankingPage() {
           <img src="/mudra.png" alt="Mudra" />
           <img src="/pacoloco.png" alt="Paco Loco" />
           <img src="/stelarosa.jpeg" alt="Stela Rosa" />
+          <img src="/kellner store.png" alt="Kellner Store" />
         </div>
       </section>
 

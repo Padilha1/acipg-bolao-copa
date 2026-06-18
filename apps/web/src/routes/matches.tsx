@@ -367,8 +367,18 @@ export function MatchesPage() {
                     </div>
 
                     {isFinished && prediction ? (
-                      <div className="bet-points">
-                        + {prediction.points} Pontos Conquistados
+                      <div className="bet-result-summary">
+                        {match.homeScore !== null && match.awayScore !== null ? (
+                          <div className="bet-final-result">
+                            <span>Resultado final:</span>
+                            <strong>
+                              {match.homeScore} x {match.awayScore}
+                            </strong>
+                          </div>
+                        ) : null}
+                        <div className="bet-points">
+                          + {prediction.points} Pontos Conquistados
+                        </div>
                       </div>
                     ) : null}
                   </article>
