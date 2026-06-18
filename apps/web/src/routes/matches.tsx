@@ -64,17 +64,6 @@ function clampScore(value: number) {
 function getDefaultScore(match: MatchDto, prediction?: ScoreDraft) {
   if (prediction) return prediction;
 
-  if (
-    match.status === "finished" &&
-    match.homeScore !== null &&
-    match.awayScore !== null
-  ) {
-    return {
-      homeScore: match.homeScore,
-      awayScore: match.awayScore,
-    };
-  }
-
   return { homeScore: 0, awayScore: 0 };
 }
 
@@ -266,6 +255,7 @@ export function MatchesPage() {
                 const isLocked = new Date(match.startsAt) <= new Date();
                 const hasPrediction = Boolean(prediction);
                 const isFinished = match.status === "finished";
+                const showMissingPrediction = isLocked && !hasPrediction;
                 const isSaving =
                   saveAll.isPending &&
                   Boolean(scores[match.id]) &&
@@ -320,7 +310,9 @@ export function MatchesPage() {
                           >
                             +
                           </button>
-                          <strong>{current.homeScore}</strong>
+                          <strong>
+                            {showMissingPrediction ? "-" : current.homeScore}
+                          </strong>
                           <button
                             aria-label={`Diminuir gols de ${match.homeTeam.name}`}
                             disabled={isLocked || current.homeScore <= 0}
@@ -346,7 +338,9 @@ export function MatchesPage() {
                           >
                             +
                           </button>
-                          <strong>{current.awayScore}</strong>
+                          <strong>
+                            {showMissingPrediction ? "-" : current.awayScore}
+                          </strong>
                           <button
                             aria-label={`Diminuir gols de ${match.awayTeam.name}`}
                             disabled={isLocked || current.awayScore <= 0}
@@ -366,7 +360,7 @@ export function MatchesPage() {
                       </div>
                     </div>
 
-                    {isFinished && prediction ? (
+                    {isFinished ? (
                       <div className="bet-result-summary">
                         {match.homeScore !== null && match.awayScore !== null ? (
                           <div className="bet-final-result">
@@ -376,9 +370,13 @@ export function MatchesPage() {
                             </strong>
                           </div>
                         ) : null}
-                        <div className="bet-points">
-                          + {prediction.points} Pontos Conquistados
-                        </div>
+                        {prediction ? (
+                          <div className="bet-points">
+                            + {prediction.points} Pontos Conquistados
+                          </div>
+                        ) : (
+                          <div className="bet-points">Sem palpite salvo</div>
+                        )}
                       </div>
                     ) : null}
                   </article>
