@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { Loader } from "../components/ui/loader";
 import { useMe } from "../lib/queries";
 
 const ADMIN_EMAIL = "padilha.matheus@hotmail.com";
@@ -27,7 +28,11 @@ export function AppLayout() {
   }, [isLogin, me.data, me.isError, navigate]);
 
   if (!isLogin && me.isLoading) {
-    return <main className="mx-auto max-w-screen-sm p-4">Carregando...</main>;
+    return (
+      <main className="app-loading mx-auto max-w-screen-sm">
+        <Loader />
+      </main>
+    );
   }
 
   return (
@@ -41,12 +46,7 @@ export function AppLayout() {
       {!isLogin ? (
         <header className="app-header">
           <div className="app-title">
-            <img
-              alt="Logo Acipg"
-              src="/logo.png"
-              width={100}
-              height={100}
-            ></img>
+            <img alt="Logo Acipg" src="/logo.png" width={100} height={100} />
           </div>
           <div className="app-actions">
             <span className="user-chip">

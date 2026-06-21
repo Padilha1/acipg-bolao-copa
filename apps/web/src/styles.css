@@ -12,6 +12,65 @@
   --color-text: #2f3934;
   --color-muted: #5d6862;
   --shadow-card: 0 10px 30px rgb(6 78 59 / 8%);
+  --wrapper-bg: #ffffff;
+  --cube-color: #0000;
+  --highlight-color: #00cc44;
+}
+
+.dark {
+  --wrapper-bg: #000000;
+  --cube-color: #0000;
+  --highlight-color: #00ff88;
+}
+
+@keyframes translate-z {
+  0%,
+  40%,
+  100% {
+    transform: translateZ(-2px);
+  }
+
+  30% {
+    transform: translateZ(16px) translateY(-1px);
+  }
+}
+
+@keyframes face-color {
+  0%,
+  50%,
+  100% {
+    background-color: var(--cube-color);
+  }
+
+  10% {
+    background-color: var(--highlight-color);
+  }
+}
+
+@keyframes face-glow {
+  0%,
+  50%,
+  100% {
+    color: #fff0;
+    filter: none;
+  }
+
+  30% {
+    color: #fff;
+    filter: drop-shadow(0 14px 10px var(--highlight-color));
+  }
+}
+
+@keyframes edge-glow {
+  0%,
+  40%,
+  100% {
+    box-shadow: inset 0 0 2px 1px #0001, inset 0 0 12px 1px #fff1;
+  }
+
+  30% {
+    box-shadow: 0 0 2px 0 var(--highlight-color);
+  }
 }
 
 html {
@@ -21,23 +80,14 @@ html {
 body {
   min-height: 100%;
   margin: 0;
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at 20% 0%,
       rgb(232 240 255 / 70%),
       transparent 34rem
-    ),
-    linear-gradient(180deg, #f8f9ff 0%, #fbfbff 62%, #fff7e8 100%);
+    ), linear-gradient(180deg, #f8f9ff 0%, #fbfbff 62%, #fff7e8 100%);
   color: var(--color-text);
-  font-family:
-    Geist,
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: Geist, Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
@@ -55,6 +105,84 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+.app-loading,
+.matches-loading {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 70vh;
+}
+
+.wrapper-grid {
+  align-items: center;
+  background: var(--wrapper-bg);
+  border: 1px solid rgb(184 196 187 / 62%);
+  border-radius: 0.9rem;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  gap: 0.48rem;
+  grid-template-columns: repeat(7, 1.8rem);
+  justify-content: center;
+  min-height: 5.7rem;
+  padding: 1.25rem;
+  perspective: 420px;
+  width: min(100%, 18rem);
+}
+
+.cube {
+  animation: translate-z 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--cube-index) * 90ms);
+  aspect-ratio: 1;
+  position: relative;
+  transform-style: preserve-3d;
+  width: 1.8rem;
+}
+
+.face {
+  align-items: center;
+  animation: face-color 1.6s ease-in-out infinite, edge-glow 1.6s ease-in-out
+    infinite;
+  animation-delay: calc(var(--cube-index) * 90ms);
+  backface-visibility: hidden;
+  background: var(--cube-color);
+  border: 1px solid rgb(47 57 52 / 20%);
+  color: #fff0;
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  inset: 0;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+}
+
+.face-front {
+  animation: face-color 1.6s ease-in-out infinite, edge-glow 1.6s ease-in-out
+    infinite, face-glow 1.6s ease-in-out infinite;
+  animation-delay: calc(var(--cube-index) * 90ms);
+  transform: translateZ(0.9rem);
+}
+
+.face-back {
+  transform: rotateY(180deg) translateZ(0.9rem);
+}
+
+.face-right {
+  transform: rotateY(90deg) translateZ(0.9rem);
+}
+
+.face-left {
+  transform: rotateY(-90deg) translateZ(0.9rem);
+}
+
+.face-top {
+  transform: rotateX(90deg) translateZ(0.9rem);
+}
+
+.face-bottom {
+  transform: rotateX(-90deg) translateZ(0.9rem);
 }
 
 .app-shell {
@@ -124,13 +252,11 @@ button:disabled {
 }
 
 .home-status-card {
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at 88% 18%,
       rgb(255 255 255 / 9%) 0 4.6rem,
       transparent 4.7rem
-    ),
-    var(--color-primary);
+    ), var(--color-primary);
   border-radius: 0.9rem;
   color: white;
   overflow: hidden;
@@ -954,9 +1080,7 @@ button:disabled {
 .team-flag,
 .team-flag-fallback {
   border-radius: 999px;
-  box-shadow:
-    0 0 0 2px rgb(6 78 59 / 14%),
-    0 0.5rem 1rem rgb(17 24 39 / 12%);
+  box-shadow: 0 0 0 2px rgb(6 78 59 / 14%), 0 0.5rem 1rem rgb(17 24 39 / 12%);
   height: 3.3rem;
   width: 3.3rem;
 }
@@ -1328,13 +1452,12 @@ button:disabled {
 
 .top-avatar {
   align-items: center;
-  background:
-    linear-gradient(145deg, rgb(6 78 59 / 92%), rgb(15 118 110 / 82%)), #0f766e;
+  background: linear-gradient(145deg, rgb(6 78 59 / 92%), rgb(15 118 110 / 82%)),
+    #0f766e;
   border: 3px solid #f8f9ff;
   border-radius: 999px;
-  box-shadow:
-    0 0 0 3px rgb(55 65 81 / 24%),
-    0 0.75rem 1.2rem rgb(17 24 39 / 12%);
+  box-shadow: 0 0 0 3px rgb(55 65 81 / 24%), 0 0.75rem 1.2rem
+    rgb(17 24 39 / 12%);
   color: white;
   display: flex;
   font-size: 1.1rem;
@@ -1346,17 +1469,13 @@ button:disabled {
 }
 
 .top-player-first .top-avatar {
-  box-shadow:
-    0 0 0 5px #8a5702,
-    0 1rem 1.45rem rgb(17 24 39 / 14%);
+  box-shadow: 0 0 0 5px #8a5702, 0 1rem 1.45rem rgb(17 24 39 / 14%);
   height: 6.2rem;
   width: 6.2rem;
 }
 
 .top-player-side:nth-child(3) .top-avatar {
-  box-shadow:
-    0 0 0 3px #d97706,
-    0 0.75rem 1.2rem rgb(17 24 39 / 12%);
+  box-shadow: 0 0 0 3px #d97706, 0 0.75rem 1.2rem rgb(17 24 39 / 12%);
 }
 
 .top-medal {
@@ -1915,10 +2034,8 @@ button:disabled {
   line-height: 1.25;
   outline: none;
   padding: 1.35rem 1.55rem;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color
+    160ms ease;
 }
 
 .text-field::placeholder {
@@ -1950,20 +2067,14 @@ button:disabled {
   line-height: 1;
   margin-top: 1.85rem;
   padding: 1.2rem 1.5rem;
-  box-shadow:
-    inset 0 -2px 0 rgb(0 0 0 / 18%),
-    0 10px 20px rgb(0 63 47 / 16%);
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 18%), 0 10px 20px rgb(0 63 47 / 16%);
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color
+    160ms ease;
 }
 
 .primary-button:hover:not(:disabled) {
   background: #03543f;
-  box-shadow:
-    inset 0 -2px 0 rgb(0 0 0 / 18%),
-    0 14px 24px rgb(0 63 47 / 20%);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 18%), 0 14px 24px rgb(0 63 47 / 20%);
 }
 
 .primary-button:active:not(:disabled) {

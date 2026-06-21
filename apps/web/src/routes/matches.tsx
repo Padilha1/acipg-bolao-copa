@@ -2,12 +2,13 @@ import type { MatchDto, PredictionDto } from "@bolao-acipg/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TeamFlag } from "../components/team-flag";
+import { Loader } from "../components/ui/loader";
 import { apiClient } from "../lib/api";
 import { useMatches, usePredictions } from "../lib/queries";
 
 type ScoreDraft = {
-  homeScore: number;
-  awayScore: number;
+  homeScore: number | null;
+  awayScore: number | null;
 };
 
 const PHASE_TABS = [
@@ -61,10 +62,19 @@ function clampScore(value: number) {
   return Math.max(0, Math.min(99, value));
 }
 
-function getDefaultScore(match: MatchDto, prediction?: ScoreDraft) {
+type CompleteScoreDraft = {
+  homeScore: number;
+  awayScore: number;
+};
+
+function getDefaultScore(prediction?: ScoreDraft) {
   if (prediction) return prediction;
 
-  return { homeScore: 0, awayScore: 0 };
+  return { homeScore: null, awayScore: null };
+}
+
+function hasCompleteScore(score: ScoreDraft): score is CompleteScoreDraft {
+  return score.homeScore !== null && score.awayScore !== null;
 }
 
 export function MatchesPage() {
@@ -114,9 +124,7 @@ export function MatchesPage() {
     const todayIndex = groupedMatches.findIndex(
       (group) => group.key === todayKey,
     );
-    const nextIndex = groupedMatches.findIndex(
-      (group) => group.key > todayKey,
-    );
+    const nextIndex = groupedMatches.findIndex((group) => group.key > todayKey);
 
     setDayIndex(
       todayIndex >= 0
@@ -136,17 +144,21 @@ export function MatchesPage() {
 
   const saveAll = useMutation({
     mutationFn: async () => {
-      const openDrafts = Object.entries(scores).filter(([matchId, score]) => {
-        const match = matches.data?.find((item) => item.id === matchId);
-        if (!match || new Date(match.startsAt) <= new Date()) return false;
+      const openDrafts = Object.entries(scores).flatMap(
+        ([matchId, score]): Array<[string, CompleteScoreDraft]> => {
+          const match = matches.data?.find((item) => item.id === matchId);
+          if (!match || new Date(match.startsAt) <= new Date()) return [];
+          if (!hasCompleteScore(score)) return [];
 
-        const saved = predictionByMatchId.get(matchId);
-        return (
-          !saved ||
-          saved.homeScore !== score.homeScore ||
-          saved.awayScore !== score.awayScore
-        );
-      });
+          const saved = predictionByMatchId.get(matchId);
+          const hasChanged =
+            !saved ||
+            saved.homeScore !== score.homeScore ||
+            saved.awayScore !== score.awayScore;
+
+          return hasChanged ? [[matchId, score]] : [];
+        },
+      );
 
       return Promise.all(
         openDrafts.map(([matchId, score]) =>
@@ -157,10 +169,7 @@ export function MatchesPage() {
     onSuccess: async (savedPredictions) => {
       queryClient.setQueryData<PredictionDto[]>(["predictions"], (current) => {
         const currentByMatch = new Map(
-          (current ?? []).map((prediction) => [
-            prediction.matchId,
-            prediction,
-          ]),
+          (current ?? []).map((prediction) => [prediction.matchId, prediction]),
         );
 
         for (const prediction of savedPredictions) {
@@ -184,7 +193,7 @@ export function MatchesPage() {
       ...value,
       [matchId]: {
         ...current,
-        [side]: clampScore(current[side] + delta),
+        [side]: current[side] === null ? 0 : clampScore(current[side] + delta),
       },
     }));
   }
@@ -192,6 +201,7 @@ export function MatchesPage() {
   const hasOpenDrafts = Object.entries(scores).some(([matchId, score]) => {
     const match = matches.data?.find((item) => item.id === matchId);
     if (!match || new Date(match.startsAt) <= new Date()) return false;
+    if (!hasCompleteScore(score)) return false;
 
     const saved = predictionByMatchId.get(matchId);
     return (
@@ -200,6 +210,14 @@ export function MatchesPage() {
       saved.awayScore !== score.awayScore
     );
   });
+
+  if (matches.isLoading || predictions.isLoading) {
+    return (
+      <section className="matches-screen matches-loading">
+        <Loader />
+      </section>
+    );
+  }
 
   return (
     <section className="matches-screen">
@@ -250,15 +268,14 @@ export function MatchesPage() {
             <div className="match-card-list">
               {selectedGroup.matches.map((match) => {
                 const prediction = predictionByMatchId.get(match.id);
-                const current =
-                  scores[match.id] ?? getDefaultScore(match, prediction);
+                const current = scores[match.id] ?? getDefaultScore(prediction);
                 const isLocked = new Date(match.startsAt) <= new Date();
                 const hasPrediction = Boolean(prediction);
                 const isFinished = match.status === "finished";
-                const showMissingPrediction = isLocked && !hasPrediction;
                 const isSaving =
                   saveAll.isPending &&
                   Boolean(scores[match.id]) &&
+                  hasCompleteScore(current) &&
                   (!prediction ||
                     prediction.homeScore !== current.homeScore ||
                     prediction.awayScore !== current.awayScore);
@@ -286,9 +303,9 @@ export function MatchesPage() {
                           ? "▣ Encerrado"
                           : isSaving
                             ? "Salvando..."
-                          : hasPrediction
-                            ? "◉ Palpite Salvo"
-                            : "◴ Aberto"}
+                            : hasPrediction
+                              ? "◉ Palpite Salvo"
+                              : "◴ Aberto"}
                       </span>
                     </header>
 
@@ -311,11 +328,15 @@ export function MatchesPage() {
                             +
                           </button>
                           <strong>
-                            {showMissingPrediction ? "-" : current.homeScore}
+                            {current.homeScore ?? "-"}
                           </strong>
                           <button
                             aria-label={`Diminuir gols de ${match.homeTeam.name}`}
-                            disabled={isLocked || current.homeScore <= 0}
+                            disabled={
+                              isLocked ||
+                              current.homeScore === null ||
+                              current.homeScore <= 0
+                            }
                             onClick={() =>
                               setScore(match.id, current, "homeScore", -1)
                             }
@@ -339,11 +360,15 @@ export function MatchesPage() {
                             +
                           </button>
                           <strong>
-                            {showMissingPrediction ? "-" : current.awayScore}
+                            {current.awayScore ?? "-"}
                           </strong>
                           <button
                             aria-label={`Diminuir gols de ${match.awayTeam.name}`}
-                            disabled={isLocked || current.awayScore <= 0}
+                            disabled={
+                              isLocked ||
+                              current.awayScore === null ||
+                              current.awayScore <= 0
+                            }
                             onClick={() =>
                               setScore(match.id, current, "awayScore", -1)
                             }
@@ -362,7 +387,8 @@ export function MatchesPage() {
 
                     {isFinished ? (
                       <div className="bet-result-summary">
-                        {match.homeScore !== null && match.awayScore !== null ? (
+                        {match.homeScore !== null &&
+                        match.awayScore !== null ? (
                           <div className="bet-final-result">
                             <span>Resultado final:</span>
                             <strong>
