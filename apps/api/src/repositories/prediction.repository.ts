@@ -31,6 +31,7 @@ export class PredictionRepository {
   findMatch(matchId: bigint) {
     return this.db.match.findUnique({
       where: { id: matchId },
+      include: { homeTeam: true, awayTeam: true, round: true },
     });
   }
 
@@ -39,6 +40,7 @@ export class PredictionRepository {
     matchId: bigint;
     homeScore: number;
     awayScore: number;
+    qualifiedTeamId: bigint | null;
   }) {
     return this.db.prediction.upsert({
       where: {
@@ -50,6 +52,7 @@ export class PredictionRepository {
       update: {
         homeScore: input.homeScore,
         awayScore: input.awayScore,
+        qualifiedTeamId: input.qualifiedTeamId,
       },
       create: input,
     });
@@ -182,7 +185,9 @@ export class PredictionRepository {
         updated_at = current_timestamp
     `;
 
-    const prediction = await this.findLeaderboardPodiumPrediction(input.entryId);
+    const prediction = await this.findLeaderboardPodiumPrediction(
+      input.entryId,
+    );
     if (!prediction) {
       throw new Error("Failed to save leaderboard podium prediction.");
     }

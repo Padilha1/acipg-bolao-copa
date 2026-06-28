@@ -48,6 +48,41 @@ pnpm lint
 pnpm --filter api prisma generate
 ```
 
+### Baseline do banco existente
+
+O banco de producao anterior ao Prisma Migrate deve ter a migration inicial
+marcada como aplicada uma unica vez. Ela descreve o schema que ja existe e nao
+executa `CREATE TABLE` durante o baseline.
+
+```bash
+pnpm --filter api prisma migrate resolve --applied 20260628000000_baseline
+pnpm --filter api prisma migrate deploy
+```
+
+Depois disso, os proximos deploys usam apenas `prisma migrate deploy`.
+
+## Importacao do mata-mata
+
+O importador aceita CSV ou JSON local, alem de URL HTTP configurada por
+`--source` ou `KNOCKOUT_BRACKET_SOURCE`.
+
+```bash
+pnpm --filter api sync:knockout -- --source prisma/data/knockout.csv --dry-run
+pnpm --filter api sync:knockout -- --source prisma/data/knockout.csv
+```
+
+Campos aceitos: `externalId`, `phase`, `position`, `startsAt`,
+`homeTeamCode`/`awayTeamCode` ou as respectivas origens
+`homeSourceExternalId`/`awaySourceExternalId` com outcome `winner` ou `loser`,
+alem de `status`, `homeScore`, `awayScore` e `qualifiedTeamCode`.
+
+```csv
+externalId,phase,position,startsAt,homeTeamCode,awayTeamCode,homeSourceExternalId,homeSourceOutcome,awaySourceExternalId,awaySourceOutcome,status,homeScore,awayScore,qualifiedTeamCode
+R32-01,round_32,1,2026-06-28T19:00:00Z,BRA,GER,,,,,scheduled,,,
+R16-01,round_16,1,2026-07-04T19:00:00Z,,,R32-01,winner,R32-02,winner,scheduled,,,
+THIRD,third_place,1,2026-07-18T19:00:00Z,,,SEMI-01,loser,SEMI-02,loser,scheduled,,,
+```
+
 ## Autenticacao
 
 O login inicial e feito com nome + email:

@@ -13,6 +13,9 @@ export class PredictionService {
       entryId: idToString(prediction.entryId),
       homeScore: prediction.homeScore,
       awayScore: prediction.awayScore,
+      qualifiedTeamId: prediction.qualifiedTeamId
+        ? idToString(prediction.qualifiedTeamId)
+        : null,
       points: prediction.points,
     }));
   }
@@ -20,7 +23,11 @@ export class PredictionService {
   async upsert(
     entryId: bigint,
     matchId: string,
-    input: { homeScore: number; awayScore: number },
+    input: {
+      homeScore: number;
+      awayScore: number;
+      qualifiedTeamId?: string | null;
+    },
   ) {
     const numericMatchId = stringToBigIntId(matchId);
     const match = await this.predictionRepository.findMatch(numericMatchId);
@@ -28,8 +35,36 @@ export class PredictionService {
       throw new HttpError(404, "Jogo nao encontrado.");
     }
 
-    if (match.startsAt <= new Date()) {
+    if (match.startsAt <= new Date() || match.status !== "scheduled") {
       throw new HttpError(409, "Palpites encerrados para este jogo.");
+    }
+
+    const isKnockout = match.round.phase !== "group";
+    if (isKnockout && (!match.homeTeamId || !match.awayTeamId)) {
+      throw new HttpError(409, "Confronto ainda nao definido.");
+    }
+
+    const qualifiedTeamId = input.qualifiedTeamId
+      ? stringToBigIntId(input.qualifiedTeamId)
+      : null;
+    if (isKnockout && !qualifiedTeamId) {
+      throw new HttpError(400, "Escolha o time que avanca.");
+    }
+    if (
+      qualifiedTeamId &&
+      qualifiedTeamId !== match.homeTeamId &&
+      qualifiedTeamId !== match.awayTeamId
+    ) {
+      throw new HttpError(400, "O classificado deve participar do confronto.");
+    }
+    const scoreWinnerId =
+      input.homeScore === input.awayScore
+        ? null
+        : input.homeScore > input.awayScore
+          ? match.homeTeamId
+          : match.awayTeamId;
+    if (isKnockout && scoreWinnerId && qualifiedTeamId !== scoreWinnerId) {
+      throw new HttpError(400, "O classificado nao combina com o placar.");
     }
 
     const prediction = await this.predictionRepository.upsertPrediction({
@@ -37,6 +72,7 @@ export class PredictionService {
       matchId: numericMatchId,
       homeScore: input.homeScore,
       awayScore: input.awayScore,
+      qualifiedTeamId,
     });
 
     return {
@@ -45,6 +81,9 @@ export class PredictionService {
       entryId: idToString(prediction.entryId),
       homeScore: prediction.homeScore,
       awayScore: prediction.awayScore,
+      qualifiedTeamId: prediction.qualifiedTeamId
+        ? idToString(prediction.qualifiedTeamId)
+        : null,
       points: prediction.points,
     };
   }
@@ -54,8 +93,7 @@ export class PredictionService {
   }
 
   async leaderboardPodiumVoteRanking() {
-    const rows =
-      await this.predictionRepository.leaderboardPodiumVoteRanking();
+    const rows = await this.predictionRepository.leaderboardPodiumVoteRanking();
 
     return rows.map((row) => ({
       position: Number(row.podiumPosition),

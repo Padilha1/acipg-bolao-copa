@@ -1,4 +1,10 @@
-import type { Entry, Match, Team, User } from "../generated/prisma/index.js";
+import type {
+  Entry,
+  Match,
+  Round,
+  Team,
+  User,
+} from "../generated/prisma/index.js";
 
 export function idToString(id: bigint) {
   return id.toString();
@@ -41,8 +47,10 @@ export function userToDto(user: User, isAdmin: boolean) {
 
 export function matchToDto(
   match: Match & {
-    homeTeam: Team;
-    awayTeam: Team;
+    homeTeam: Team | null;
+    awayTeam: Team | null;
+    qualifiedTeam: Team | null;
+    round: Round;
   },
 ) {
   return {
@@ -50,10 +58,28 @@ export function matchToDto(
     roundId: idToString(match.roundId),
     startsAt: match.startsAt.toISOString(),
     venue: null,
-    status: match.status === "finished" ? "finished" : "scheduled",
+    phase: match.round.phase,
+    bracketPosition: match.bracketPosition,
+    externalId: match.externalId,
+    status: match.status,
     homeScore: match.homeScore,
     awayScore: match.awayScore,
-    homeTeam: teamToDto(match.homeTeam),
-    awayTeam: teamToDto(match.awayTeam),
+    homeTeam: match.homeTeam ? teamToDto(match.homeTeam) : null,
+    awayTeam: match.awayTeam ? teamToDto(match.awayTeam) : null,
+    qualifiedTeam: match.qualifiedTeam ? teamToDto(match.qualifiedTeam) : null,
+    homeSource:
+      match.homeSourceMatchId && match.homeSourceOutcome
+        ? {
+            matchId: idToString(match.homeSourceMatchId),
+            outcome: match.homeSourceOutcome,
+          }
+        : null,
+    awaySource:
+      match.awaySourceMatchId && match.awaySourceOutcome
+        ? {
+            matchId: idToString(match.awaySourceMatchId),
+            outcome: match.awaySourceOutcome,
+          }
+        : null,
   };
 }

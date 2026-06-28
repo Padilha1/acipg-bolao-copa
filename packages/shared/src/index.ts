@@ -20,6 +20,7 @@ export const updateMeSchema = z.object({
 export const predictionInputSchema = z.object({
   homeScore: z.coerce.number().int().min(0).max(99),
   awayScore: z.coerce.number().int().min(0).max(99),
+  qualifiedTeamId: z.string().regex(/^\d+$/).nullable().optional(),
 });
 
 export const leaderboardPodiumPredictionInputSchema = z
@@ -53,8 +54,14 @@ export const createRoundSchema = z.object({
 
 export const createMatchSchema = z.object({
   roundId: z.string().regex(/^\d+$/),
-  homeTeamId: z.string().regex(/^\d+$/),
-  awayTeamId: z.string().regex(/^\d+$/),
+  homeTeamId: z.string().regex(/^\d+$/).nullable().optional(),
+  awayTeamId: z.string().regex(/^\d+$/).nullable().optional(),
+  homeSourceMatchId: z.string().regex(/^\d+$/).nullable().optional(),
+  awaySourceMatchId: z.string().regex(/^\d+$/).nullable().optional(),
+  homeSourceOutcome: z.enum(["winner", "loser"]).nullable().optional(),
+  awaySourceOutcome: z.enum(["winner", "loser"]).nullable().optional(),
+  externalId: z.string().trim().min(1).max(100).nullable().optional(),
+  bracketPosition: z.coerce.number().int().min(1).nullable().optional(),
   startsAt: z.coerce.date(),
   venue: z.string().trim().max(120).optional().nullable(),
 });
@@ -64,6 +71,7 @@ export const updateMatchSchema = createMatchSchema.partial();
 export const updateMatchResultSchema = z.object({
   homeScore: z.coerce.number().int().min(0).max(99),
   awayScore: z.coerce.number().int().min(0).max(99),
+  qualifiedTeamId: z.string().regex(/^\d+$/).nullable().optional(),
 });
 
 export type AuthStartInput = z.infer<typeof authStartSchema>;
@@ -120,11 +128,29 @@ export type MatchDto = {
   roundId: string;
   startsAt: string;
   venue: string | null;
-  status: "scheduled" | "finished";
-  homeTeam: TeamDto;
-  awayTeam: TeamDto;
+  phase:
+    | "group"
+    | "round_32"
+    | "round_16"
+    | "quarter"
+    | "semi"
+    | "third_place"
+    | "final";
+  bracketPosition: number | null;
+  externalId: string | null;
+  status: "scheduled" | "locked" | "finished";
+  homeTeam: TeamDto | null;
+  awayTeam: TeamDto | null;
+  qualifiedTeam: TeamDto | null;
+  homeSource: BracketSourceDto | null;
+  awaySource: BracketSourceDto | null;
   homeScore: number | null;
   awayScore: number | null;
+};
+
+export type BracketSourceDto = {
+  matchId: string;
+  outcome: "winner" | "loser";
 };
 
 export type PredictionDto = {
@@ -133,6 +159,7 @@ export type PredictionDto = {
   entryId: string;
   homeScore: number;
   awayScore: number;
+  qualifiedTeamId: string | null;
   points: number;
 };
 

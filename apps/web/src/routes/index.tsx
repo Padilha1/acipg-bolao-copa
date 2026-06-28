@@ -1,4 +1,4 @@
-import type { MatchDto } from "@bolao-acipg/shared";
+import type { MatchDto, TeamDto } from "@bolao-acipg/shared";
 import { Link } from "@tanstack/react-router";
 import { TeamFlag } from "../components/team-flag";
 import { useMatches, useMe, usePredictions, useRanking } from "../lib/queries";
@@ -48,7 +48,15 @@ function formatRelativeMatchTime(value: string) {
   return `${day} • ${formatHour(value)}`;
 }
 
-function CompactMatchCard({ match }: { match: MatchDto }) {
+function hasTeams(
+  match: MatchDto,
+): match is MatchDto & { homeTeam: TeamDto; awayTeam: TeamDto } {
+  return Boolean(match.homeTeam && match.awayTeam);
+}
+
+type DefinedMatch = MatchDto & { homeTeam: TeamDto; awayTeam: TeamDto };
+
+function CompactMatchCard({ match }: { match: DefinedMatch }) {
   return (
     <article className="home-next-card">
       <div className="home-next-meta">
@@ -73,7 +81,7 @@ function CompactMatchCard({ match }: { match: MatchDto }) {
   );
 }
 
-function ResultCard({ match }: { match: MatchDto }) {
+function ResultCard({ match }: { match: DefinedMatch }) {
   return (
     <article className="home-result-card">
       <TeamFlag team={match.homeTeam} />
@@ -97,12 +105,14 @@ export function HomePage() {
   const topRanking = ranking.data?.slice(0, 5) ?? [];
   const nextMatches =
     matches.data
-      ?.filter((match) => new Date(match.startsAt) > new Date())
+      ?.filter(hasTeams)
+      .filter((match) => new Date(match.startsAt) > new Date())
       .slice(0, 2) ?? [];
   const nextMatch = nextMatches[0];
   const recentResults =
     matches.data
-      ?.filter((match) => match.status === "finished")
+      ?.filter(hasTeams)
+      .filter((match) => match.status === "finished")
       .slice(-2)
       .reverse() ?? [];
 

@@ -1,4 +1,8 @@
-import { calculatePredictionPoints } from "../lib/points.js";
+import { HttpError } from "../lib/http-error.js";
+import {
+  calculateKnockoutPredictionPoints,
+  calculatePredictionPoints,
+} from "../lib/points.js";
 import {
   idToString,
   matchToDto,
@@ -21,8 +25,14 @@ export class AdminService {
 
   async createMatch(input: {
     roundId: string;
-    homeTeamId: string;
-    awayTeamId: string;
+    homeTeamId?: string | null;
+    awayTeamId?: string | null;
+    homeSourceMatchId?: string | null;
+    awaySourceMatchId?: string | null;
+    homeSourceOutcome?: "winner" | "loser" | null;
+    awaySourceOutcome?: "winner" | "loser" | null;
+    externalId?: string | null;
+    bracketPosition?: number | null;
     startsAt: Date;
     venue?: string | null;
   }) {
@@ -34,8 +44,14 @@ export class AdminService {
     id: string,
     input: Partial<{
       roundId: string;
-      homeTeamId: string;
-      awayTeamId: string;
+      homeTeamId: string | null;
+      awayTeamId: string | null;
+      homeSourceMatchId: string | null;
+      awaySourceMatchId: string | null;
+      homeSourceOutcome: "winner" | "loser" | null;
+      awaySourceOutcome: "winner" | "loser" | null;
+      externalId: string | null;
+      bracketPosition: number | null;
       startsAt: Date;
       venue: string | null;
     }>,
@@ -43,12 +59,34 @@ export class AdminService {
     return this.adminRepository
       .updateMatch(id, {
         roundId: input.roundId ? stringToBigIntId(input.roundId) : undefined,
-        homeTeamId: input.homeTeamId
-          ? stringToBigIntId(input.homeTeamId)
-          : undefined,
-        awayTeamId: input.awayTeamId
-          ? stringToBigIntId(input.awayTeamId)
-          : undefined,
+        homeTeamId:
+          input.homeTeamId === undefined
+            ? undefined
+            : input.homeTeamId
+              ? stringToBigIntId(input.homeTeamId)
+              : null,
+        awayTeamId:
+          input.awayTeamId === undefined
+            ? undefined
+            : input.awayTeamId
+              ? stringToBigIntId(input.awayTeamId)
+              : null,
+        homeSourceMatchId:
+          input.homeSourceMatchId === undefined
+            ? undefined
+            : input.homeSourceMatchId
+              ? stringToBigIntId(input.homeSourceMatchId)
+              : null,
+        awaySourceMatchId:
+          input.awaySourceMatchId === undefined
+            ? undefined
+            : input.awaySourceMatchId
+              ? stringToBigIntId(input.awaySourceMatchId)
+              : null,
+        homeSourceOutcome: input.homeSourceOutcome,
+        awaySourceOutcome: input.awaySourceOutcome,
+        externalId: input.externalId,
+        bracketPosition: input.bracketPosition,
         startsAt: input.startsAt,
       })
       .then(matchToDto);
@@ -56,9 +94,42 @@ export class AdminService {
 
   async updateResult(
     id: string,
-    result: { homeScore: number; awayScore: number },
+    result: {
+      homeScore: number;
+      awayScore: number;
+      qualifiedTeamId?: string | null;
+    },
   ) {
+    const current = await this.adminRepository.findMatchWithPredictions(id);
+    if (!current) {
+      throw new HttpError(404, "Jogo nao encontrado.");
+    }
+    const isKnockout = current.round.phase !== "group";
+    if (isKnockout && !result.qualifiedTeamId) {
+      throw new HttpError(400, "Informe o classificado do jogo eliminatorio.");
+    }
+    const qualifiedTeamId = result.qualifiedTeamId
+      ? stringToBigIntId(result.qualifiedTeamId)
+      : null;
+    if (
+      qualifiedTeamId &&
+      qualifiedTeamId !== current.homeTeamId &&
+      qualifiedTeamId !== current.awayTeamId
+    ) {
+      throw new HttpError(400, "O classificado deve participar do confronto.");
+    }
+    const scoreWinnerId =
+      result.homeScore === result.awayScore
+        ? null
+        : result.homeScore > result.awayScore
+          ? current.homeTeamId
+          : current.awayTeamId;
+    if (isKnockout && scoreWinnerId && qualifiedTeamId !== scoreWinnerId) {
+      throw new HttpError(400, "O classificado nao combina com o placar.");
+    }
+
     const match = await this.adminRepository.updateMatchResult(id, result);
+    await this.adminRepository.propagateResult(id);
     await this.recalculate(id);
     return matchToDto(match);
   }
@@ -73,16 +144,29 @@ export class AdminService {
       match.predictions.map((prediction) =>
         this.adminRepository.updatePredictionPoints(
           prediction.id,
-          calculatePredictionPoints(
-            {
-              homeScore: prediction.homeScore,
-              awayScore: prediction.awayScore,
-            },
-            {
-              homeScore: match.homeScore as number,
-              awayScore: match.awayScore as number,
-            },
-          ),
+          match.round.phase === "group"
+            ? calculatePredictionPoints(
+                {
+                  homeScore: prediction.homeScore,
+                  awayScore: prediction.awayScore,
+                },
+                {
+                  homeScore: match.homeScore as number,
+                  awayScore: match.awayScore as number,
+                },
+              )
+            : calculateKnockoutPredictionPoints(
+                {
+                  homeScore: prediction.homeScore,
+                  awayScore: prediction.awayScore,
+                  qualifiedTeamId: prediction.qualifiedTeamId,
+                },
+                {
+                  homeScore: match.homeScore as number,
+                  awayScore: match.awayScore as number,
+                  qualifiedTeamId: match.qualifiedTeamId,
+                },
+              ),
         ),
       ),
     );

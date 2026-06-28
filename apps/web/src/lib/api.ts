@@ -58,9 +58,16 @@ export const apiClient = {
   rounds: () => api.get("rounds").json<RoundDto[]>(),
   matches: () => api.get("matches").json<MatchDto[]>(),
   predictions: () => api.get("predictions/me").json<PredictionDto[]>(),
-  savePrediction: (matchId: string, homeScore: number, awayScore: number) =>
+  savePrediction: (
+    matchId: string,
+    homeScore: number,
+    awayScore: number,
+    qualifiedTeamId?: string | null,
+  ) =>
     api
-      .put(`predictions/${matchId}`, { json: { homeScore, awayScore } })
+      .put(`predictions/${matchId}`, {
+        json: { homeScore, awayScore, qualifiedTeamId },
+      })
       .json<PredictionDto>(),
   ranking: () => api.get("ranking").json<RankingRowDto[]>(),
   leaderboardPodiumPrediction: () =>
@@ -71,9 +78,7 @@ export const apiClient = {
     api
       .get("leaderboard-podium-prediction/top")
       .json<LeaderboardPodiumVoteRowDto[]>(),
-  saveLeaderboardPodiumPrediction: (
-    input: LeaderboardPodiumPredictionInput,
-  ) =>
+  saveLeaderboardPodiumPrediction: (input: LeaderboardPodiumPredictionInput) =>
     api
       .put("leaderboard-podium-prediction/me", { json: input })
       .json<LeaderboardPodiumPredictionDto>(),
@@ -81,14 +86,18 @@ export const apiClient = {
     api.post("admin/rounds", { json: input }).json<RoundDto>(),
   createMatch: (input: {
     roundId: string;
-    homeTeamId: string;
-    awayTeamId: string;
+    homeTeamId?: string | null;
+    awayTeamId?: string | null;
     startsAt: string;
     venue?: string;
   }) => api.post("admin/matches", { json: input }).json<MatchDto>(),
   updateResult: (
     matchId: string,
-    input: { homeScore: number; awayScore: number },
+    input: {
+      homeScore: number;
+      awayScore: number;
+      qualifiedTeamId?: string | null;
+    },
   ) =>
     api
       .patch(`admin/matches/${matchId}/result`, { json: input })

@@ -1,4 +1,4 @@
-import type { MatchDto } from "@bolao-acipg/shared";
+import type { MatchDto, TeamDto } from "@bolao-acipg/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
@@ -11,6 +11,7 @@ const ADMIN_EMAIL = "padilha.matheus@hotmail.com";
 type ResultDraft = {
   homeScore: string;
   awayScore: string;
+  qualifiedTeamId: string;
 };
 
 function formatAdminDate(value: string) {
@@ -30,7 +31,25 @@ function formatAdminDate(value: string) {
 }
 
 function groupLabel(match: MatchDto) {
-  return `Grupo ${match.homeTeam.group ?? "-"}`;
+  return match.phase === "group"
+    ? `Grupo ${match.homeTeam?.group ?? "-"}`
+    : match.phase === "round_32"
+      ? "16 avos"
+      : match.phase === "round_16"
+        ? "Oitavas"
+        : match.phase === "quarter"
+          ? "Quartas"
+          : match.phase === "semi"
+            ? "Semifinal"
+            : match.phase === "third_place"
+              ? "3º lugar"
+              : "Final";
+}
+
+function hasTeams(
+  match: MatchDto,
+): match is MatchDto & { homeTeam: TeamDto; awayTeam: TeamDto } {
+  return Boolean(match.homeTeam && match.awayTeam);
 }
 
 export function AdminPage() {
@@ -97,10 +116,12 @@ export function AdminPage() {
       matchId: string;
       homeScore: number;
       awayScore: number;
+      qualifiedTeamId?: string | null;
     }) =>
       apiClient.updateResult(input.matchId, {
         homeScore: input.homeScore,
         awayScore: input.awayScore,
+        qualifiedTeamId: input.qualifiedTeamId,
       }),
     onSuccess: invalidateAdminData,
   });
@@ -130,15 +151,18 @@ export function AdminPage() {
   const upcomingMatches =
     matches.data
       ?.filter((item) => new Date(item.startsAt) > new Date())
+      .filter(hasTeams)
       .slice(0, 4) ?? [];
 
   const resultMatches =
     matches.data
       ?.filter((item) => new Date(item.startsAt) <= new Date())
+      .filter(hasTeams)
       .slice()
       .sort(
         (left, right) =>
-          new Date(right.startsAt).getTime() - new Date(left.startsAt).getTime(),
+          new Date(right.startsAt).getTime() -
+          new Date(left.startsAt).getTime(),
       )
       .slice(0, 8) ?? [];
 
@@ -147,6 +171,7 @@ export function AdminPage() {
       resultDrafts[matchItem.id] ?? {
         homeScore: matchItem.homeScore?.toString() ?? "",
         awayScore: matchItem.awayScore?.toString() ?? "",
+        qualifiedTeamId: matchItem.qualifiedTeam?.id ?? "",
       }
     );
   }
@@ -159,6 +184,8 @@ export function AdminPage() {
       matchId: matchItem.id,
       homeScore: Number(draft.homeScore),
       awayScore: Number(draft.awayScore),
+      qualifiedTeamId:
+        matchItem.phase === "group" ? null : draft.qualifiedTeamId,
     });
   }
 
@@ -218,7 +245,7 @@ export function AdminPage() {
               }
             >
               <option value="group">Fase de Grupos</option>
-              <option value="round_32">32 avos</option>
+              <option value="round_32">16 avos</option>
               <option value="round_16">Oitavas</option>
               <option value="quarter">Quartas</option>
               <option value="semi">Semifinal</option>
@@ -376,8 +403,7 @@ export function AdminPage() {
               >
                 <div className="admin-result-head">
                   <span>
-                    {groupLabel(item)} •{" "}
-                    {formatAdminDate(item.startsAt)} •{" "}
+                    {groupLabel(item)} • {formatAdminDate(item.startsAt)} •{" "}
                     {isSaved ? "Encerrado" : "Em andamento"}
                   </span>
                   <strong className={isSaved ? "" : "pending"}>
@@ -424,6 +450,33 @@ export function AdminPage() {
                     <span>{item.awayTeam.fifaCode}</span>
                   </div>
                 </div>
+
+                {item.phase !== "group" ? (
+                  <label className="admin-qualified-field">
+                    <span>Classificado (pênaltis não entram no placar)</span>
+                    <select
+                      required
+                      value={draft.qualifiedTeamId}
+                      onChange={(event) =>
+                        setResultDrafts((value) => ({
+                          ...value,
+                          [item.id]: {
+                            ...draft,
+                            qualifiedTeamId: event.target.value,
+                          },
+                        }))
+                      }
+                    >
+                      <option value="">Selecionar classificado</option>
+                      <option value={item.homeTeam.id}>
+                        {item.homeTeam.name}
+                      </option>
+                      <option value={item.awayTeam.id}>
+                        {item.awayTeam.name}
+                      </option>
+                    </select>
+                  </label>
+                ) : null}
 
                 <button disabled={updateResult.isPending} type="submit">
                   {isSaved ? "Atualizar" : "Salvar Resultado"}

@@ -86,6 +86,8 @@ model Team {
   groupQualificationPredictions GroupQualificationPrediction[]
   homeMatches                   Match[]                        @relation("HomeTeam")
   awayMatches                   Match[]                        @relation("AwayTeam")
+  qualifiedMatches              Match[]                        @relation("QualifiedTeam")
+  qualificationPredictions      Prediction[]                   @relation("PredictedQualifiedTeam")
 
   @@map("teams")
 }
@@ -108,8 +110,15 @@ model Match {
   id          BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
   pool_id     BigInt         @db.UnsignedBigInt
   roundId     BigInt         @map("round_id") @db.UnsignedBigInt
-  homeTeamId  BigInt         @map("home_team_id") @db.UnsignedBigInt
-  awayTeamId  BigInt         @map("away_team_id") @db.UnsignedBigInt
+  homeTeamId  BigInt?        @map("home_team_id") @db.UnsignedBigInt
+  awayTeamId  BigInt?        @map("away_team_id") @db.UnsignedBigInt
+  qualifiedTeamId BigInt?     @map("qualified_team_id") @db.UnsignedBigInt
+  externalId  String?        @unique(map: "uq_matches_external_id") @map("external_id") @db.VarChar(100)
+  bracketPosition Int?        @map("bracket_position")
+  homeSourceMatchId BigInt?   @map("home_source_match_id") @db.UnsignedBigInt
+  awaySourceMatchId BigInt?   @map("away_source_match_id") @db.UnsignedBigInt
+  homeSourceOutcome bracket_source_outcome? @map("home_source_outcome")
+  awaySourceOutcome bracket_source_outcome? @map("away_source_outcome")
   startsAt    DateTime       @map("starts_at") @db.DateTime(0)
   status      matches_status @default(scheduled)
   homeScore   Int?           @map("home_score")
@@ -118,14 +127,23 @@ model Match {
   updatedAt   DateTime?      @updatedAt @map("updated_at") @db.Timestamp(0)
   pools       Pool           @relation(fields: [pool_id], references: [id], onUpdate: Restrict, map: "matches_ibfk_1")
   round       Round          @relation(fields: [roundId], references: [id], onUpdate: Restrict, map: "matches_ibfk_2")
-  homeTeam    Team           @relation("HomeTeam", fields: [homeTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_3")
-  awayTeam    Team           @relation("AwayTeam", fields: [awayTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_4")
+  homeTeam    Team?          @relation("HomeTeam", fields: [homeTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_3")
+  awayTeam    Team?          @relation("AwayTeam", fields: [awayTeamId], references: [id], onUpdate: Restrict, map: "matches_ibfk_4")
+  qualifiedTeam Team?        @relation("QualifiedTeam", fields: [qualifiedTeamId], references: [id], onUpdate: Restrict, map: "matches_qualified_team_fk")
+  homeSourceMatch Match?      @relation("HomeSource", fields: [homeSourceMatchId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "matches_home_source_fk")
+  awaySourceMatch Match?      @relation("AwaySource", fields: [awaySourceMatchId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "matches_away_source_fk")
+  homeTargetMatches Match[]   @relation("HomeSource")
+  awayTargetMatches Match[]   @relation("AwaySource")
   predictions Prediction[]
 
   @@index([awayTeamId], map: "away_team_id")
   @@index([homeTeamId], map: "home_team_id")
   @@index([pool_id], map: "pool_id")
   @@index([roundId], map: "round_id")
+  @@index([qualifiedTeamId], map: "qualified_team_id")
+  @@index([homeSourceMatchId], map: "home_source_match_id")
+  @@index([awaySourceMatchId], map: "away_source_match_id")
+  @@unique([roundId, bracketPosition], map: "uq_round_bracket_position")
   @@map("matches")
 }
 
@@ -135,14 +153,17 @@ model Prediction {
   matchId   BigInt    @map("match_id") @db.UnsignedBigInt
   homeScore Int       @map("home_score")
   awayScore Int       @map("away_score")
+  qualifiedTeamId BigInt? @map("qualified_team_id") @db.UnsignedBigInt
   points    Int       @default(0)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   updatedAt DateTime? @updatedAt @map("updated_at") @db.Timestamp(0)
   entry     Entry     @relation(fields: [entryId], references: [id], onUpdate: Restrict, map: "predictions_ibfk_1")
   match     Match     @relation(fields: [matchId], references: [id], onUpdate: Restrict, map: "predictions_ibfk_2")
+  qualifiedTeam Team? @relation("PredictedQualifiedTeam", fields: [qualifiedTeamId], references: [id], onUpdate: Restrict, map: "predictions_qualified_team_fk")
 
   @@unique([entryId, matchId], map: "uq_entry_match")
   @@index([matchId], map: "match_id")
+  @@index([qualifiedTeamId], map: "qualified_team_id")
   @@map("predictions")
 }
 
@@ -207,4 +228,9 @@ enum matches_status {
   scheduled
   locked
   finished
+}
+
+enum bracket_source_outcome {
+  winner
+  loser
 }

@@ -1,4 +1,8 @@
-import type { PrismaClient, rounds_phase } from "../generated/prisma/index.js";
+import type {
+  PrismaClient,
+  bracket_source_outcome,
+  rounds_phase,
+} from "../generated/prisma/index.js";
 import { stringToBigIntId } from "../lib/serializers.js";
 
 export class AdminRepository {
@@ -37,8 +41,14 @@ export class AdminRepository {
 
   async createMatch(data: {
     roundId: string;
-    homeTeamId: string;
-    awayTeamId: string;
+    homeTeamId?: string | null;
+    awayTeamId?: string | null;
+    homeSourceMatchId?: string | null;
+    awaySourceMatchId?: string | null;
+    homeSourceOutcome?: bracket_source_outcome | null;
+    awaySourceOutcome?: bracket_source_outcome | null;
+    externalId?: string | null;
+    bracketPosition?: number | null;
     startsAt: Date;
     venue?: string | null;
   }) {
@@ -48,13 +58,25 @@ export class AdminRepository {
       data: {
         pool_id: poolId,
         roundId: stringToBigIntId(data.roundId),
-        homeTeamId: stringToBigIntId(data.homeTeamId),
-        awayTeamId: stringToBigIntId(data.awayTeamId),
+        homeTeamId: data.homeTeamId ? stringToBigIntId(data.homeTeamId) : null,
+        awayTeamId: data.awayTeamId ? stringToBigIntId(data.awayTeamId) : null,
+        homeSourceMatchId: data.homeSourceMatchId
+          ? stringToBigIntId(data.homeSourceMatchId)
+          : null,
+        awaySourceMatchId: data.awaySourceMatchId
+          ? stringToBigIntId(data.awaySourceMatchId)
+          : null,
+        homeSourceOutcome: data.homeSourceOutcome,
+        awaySourceOutcome: data.awaySourceOutcome,
+        externalId: data.externalId,
+        bracketPosition: data.bracketPosition,
         startsAt: data.startsAt,
       },
       include: {
         homeTeam: true,
         awayTeam: true,
+        qualifiedTeam: true,
+        round: true,
       },
     });
   }
@@ -63,8 +85,14 @@ export class AdminRepository {
     id: string,
     data: Partial<{
       roundId: bigint;
-      homeTeamId: bigint;
-      awayTeamId: bigint;
+      homeTeamId: bigint | null;
+      awayTeamId: bigint | null;
+      homeSourceMatchId: bigint | null;
+      awaySourceMatchId: bigint | null;
+      homeSourceOutcome: bracket_source_outcome | null;
+      awaySourceOutcome: bracket_source_outcome | null;
+      externalId: string | null;
+      bracketPosition: number | null;
       startsAt: Date;
     }>,
   ) {
@@ -74,23 +102,34 @@ export class AdminRepository {
       include: {
         homeTeam: true,
         awayTeam: true,
+        qualifiedTeam: true,
+        round: true,
       },
     });
   }
 
   updateMatchResult(
     id: string,
-    data: { homeScore: number; awayScore: number },
+    data: {
+      homeScore: number;
+      awayScore: number;
+      qualifiedTeamId?: string | null;
+    },
   ) {
     return this.db.match.update({
       where: { id: stringToBigIntId(id) },
       data: {
         ...data,
+        qualifiedTeamId: data.qualifiedTeamId
+          ? stringToBigIntId(data.qualifiedTeamId)
+          : null,
         status: "finished",
       },
       include: {
         homeTeam: true,
         awayTeam: true,
+        qualifiedTeam: true,
+        round: true,
       },
     });
   }
@@ -100,8 +139,51 @@ export class AdminRepository {
       where: { id: stringToBigIntId(id) },
       include: {
         predictions: true,
+        round: true,
+        homeTeam: true,
+        awayTeam: true,
       },
     });
+  }
+
+  async propagateResult(id: string) {
+    const source = await this.db.match.findUnique({
+      where: { id: stringToBigIntId(id) },
+    });
+    if (!source?.qualifiedTeamId || !source.homeTeamId || !source.awayTeamId) {
+      return;
+    }
+
+    const loserTeamId =
+      source.qualifiedTeamId === source.homeTeamId
+        ? source.awayTeamId
+        : source.homeTeamId;
+    const dependents = await this.db.match.findMany({
+      where: {
+        OR: [
+          { homeSourceMatchId: source.id },
+          { awaySourceMatchId: source.id },
+        ],
+      },
+    });
+
+    for (const dependent of dependents) {
+      const teamFor = (outcome: bracket_source_outcome | null) =>
+        outcome === "loser" ? loserTeamId : source.qualifiedTeamId;
+      await this.db.match.update({
+        where: { id: dependent.id },
+        data: {
+          homeTeamId:
+            dependent.homeSourceMatchId === source.id
+              ? teamFor(dependent.homeSourceOutcome)
+              : undefined,
+          awayTeamId:
+            dependent.awaySourceMatchId === source.id
+              ? teamFor(dependent.awaySourceOutcome)
+              : undefined,
+        },
+      });
+    }
   }
 
   updatePredictionPoints(id: bigint, points: number) {

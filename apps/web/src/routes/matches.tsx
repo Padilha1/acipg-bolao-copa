@@ -1,6 +1,7 @@
 import type { MatchDto, PredictionDto } from "@bolao-acipg/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { KnockoutBracket } from "../components/knockout-bracket";
 import { TeamFlag } from "../components/team-flag";
 import { Loader } from "../components/ui/loader";
 import { apiClient } from "../lib/api";
@@ -12,12 +13,13 @@ type ScoreDraft = {
 };
 
 const PHASE_TABS = [
-  "Fase de Grupos",
-  "Oitavas de Final",
-  "Quartas",
-  "Semifinal",
-  "Final",
-];
+  { phase: "group", label: "Fase de Grupos" },
+  { phase: "round_32", label: "16 avos" },
+  { phase: "round_16", label: "Oitavas" },
+  { phase: "quarter", label: "Quartas" },
+  { phase: "semi", label: "Semifinais" },
+  { phase: "final", label: "Final" },
+] as const;
 
 function formatMatchDay(value: string) {
   const date = new Date(value);
@@ -83,6 +85,8 @@ export function MatchesPage() {
   const queryClient = useQueryClient();
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [dayIndex, setDayIndex] = useState(0);
+  const [activePhase, setActivePhase] =
+    useState<(typeof PHASE_TABS)[number]["phase"]>("round_32");
   const hasAutoSelectedDay = useRef(false);
 
   const predictionByMatchId = useMemo(
@@ -99,7 +103,9 @@ export function MatchesPage() {
   const groupedMatches = useMemo(() => {
     const groups = new Map<string, MatchDto[]>();
 
-    for (const match of matches.data ?? []) {
+    for (const match of matches.data?.filter(
+      (item) => item.phase === "group",
+    ) ?? []) {
       const key = getDayKey(match.startsAt);
       groups.set(key, [...(groups.get(key) ?? []), match]);
     }
@@ -147,7 +153,12 @@ export function MatchesPage() {
       const openDrafts = Object.entries(scores).flatMap(
         ([matchId, score]): Array<[string, CompleteScoreDraft]> => {
           const match = matches.data?.find((item) => item.id === matchId);
-          if (!match || new Date(match.startsAt) <= new Date()) return [];
+          if (
+            !match ||
+            new Date(match.startsAt) <= new Date() ||
+            match.status !== "scheduled"
+          )
+            return [];
           if (!hasCompleteScore(score)) return [];
 
           const saved = predictionByMatchId.get(matchId);
@@ -200,7 +211,12 @@ export function MatchesPage() {
 
   const hasOpenDrafts = Object.entries(scores).some(([matchId, score]) => {
     const match = matches.data?.find((item) => item.id === matchId);
-    if (!match || new Date(match.startsAt) <= new Date()) return false;
+    if (
+      !match ||
+      new Date(match.startsAt) <= new Date() ||
+      match.status !== "scheduled"
+    )
+      return false;
     if (!hasCompleteScore(score)) return false;
 
     const saved = predictionByMatchId.get(matchId);
@@ -222,19 +238,44 @@ export function MatchesPage() {
   return (
     <section className="matches-screen">
       <div className="match-tabs" aria-label="Fases da Copa">
-        {PHASE_TABS.map((tab, index) => (
-          <button
-            className={index === 0 ? "match-tab match-tab-active" : "match-tab"}
-            disabled={index > 0}
-            key={tab}
-            type="button"
-          >
-            {tab}
-          </button>
-        ))}
+        {PHASE_TABS.map((tab) => {
+          const isAvailable =
+            tab.phase === "group" ||
+            (matches.data ?? []).some(
+              (match) =>
+                match.phase === tab.phase &&
+                match.homeTeam !== null &&
+                match.awayTeam !== null,
+            );
+
+          return (
+            <button
+              className={
+                activePhase === tab.phase
+                  ? "match-tab match-tab-active"
+                  : "match-tab"
+              }
+              disabled={!isAvailable}
+              key={tab.phase}
+              onClick={() => setActivePhase(tab.phase)}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {selectedGroup ? (
+      {activePhase !== "group" ? (
+        <KnockoutBracket
+          matches={(matches.data ?? []).filter(
+            (match) => match.phase !== "group",
+          )}
+          predictions={predictions.data ?? []}
+        />
+      ) : null}
+
+      {activePhase === "group" && selectedGroup ? (
         <>
           <div className="match-day-pager">
             <button
@@ -267,9 +308,12 @@ export function MatchesPage() {
 
             <div className="match-card-list">
               {selectedGroup.matches.map((match) => {
+                if (!match.homeTeam || !match.awayTeam) return null;
                 const prediction = predictionByMatchId.get(match.id);
                 const current = scores[match.id] ?? getDefaultScore(prediction);
-                const isLocked = new Date(match.startsAt) <= new Date();
+                const isLocked =
+                  new Date(match.startsAt) <= new Date() ||
+                  match.status !== "scheduled";
                 const hasPrediction = Boolean(prediction);
                 const isFinished = match.status === "finished";
                 const isSaving =
@@ -327,9 +371,7 @@ export function MatchesPage() {
                           >
                             +
                           </button>
-                          <strong>
-                            {current.homeScore ?? "-"}
-                          </strong>
+                          <strong>{current.homeScore ?? "-"}</strong>
                           <button
                             aria-label={`Diminuir gols de ${match.homeTeam.name}`}
                             disabled={
@@ -359,9 +401,7 @@ export function MatchesPage() {
                           >
                             +
                           </button>
-                          <strong>
-                            {current.awayScore ?? "-"}
-                          </strong>
+                          <strong>{current.awayScore ?? "-"}</strong>
                           <button
                             aria-label={`Diminuir gols de ${match.awayTeam.name}`}
                             disabled={
@@ -411,18 +451,20 @@ export function MatchesPage() {
             </div>
           </section>
         </>
-      ) : (
+      ) : activePhase === "group" ? (
         <p className="home-empty-card">Nenhum jogo cadastrado.</p>
-      )}
+      ) : null}
 
-      <button
-        className="save-all-bets"
-        disabled={!hasOpenDrafts || saveAll.isPending}
-        onClick={() => saveAll.mutate()}
-        type="button"
-      >
-        {saveAll.isPending ? "Salvando..." : "▣ Salvar Todos os Palpites"}
-      </button>
+      {activePhase === "group" ? (
+        <button
+          className="save-all-bets"
+          disabled={!hasOpenDrafts || saveAll.isPending}
+          onClick={() => saveAll.mutate()}
+          type="button"
+        >
+          {saveAll.isPending ? "Salvando..." : "▣ Salvar Todos os Palpites"}
+        </button>
+      ) : null}
     </section>
   );
 }

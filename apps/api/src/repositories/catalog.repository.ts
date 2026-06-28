@@ -20,6 +20,8 @@ export class CatalogRepository {
       include: {
         homeTeam: true,
         awayTeam: true,
+        qualifiedTeam: true,
+        round: true,
       },
       orderBy: {
         startsAt: "asc",

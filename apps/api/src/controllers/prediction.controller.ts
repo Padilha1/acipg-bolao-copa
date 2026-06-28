@@ -30,6 +30,7 @@ export class PredictionController {
       {
         homeScore: body.homeScore,
         awayScore: body.awayScore,
+        qualifiedTeamId: body.qualifiedTeamId,
       },
     );
   };

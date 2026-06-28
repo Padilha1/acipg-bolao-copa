@@ -12,6 +12,9 @@
     "start": "node dist/index.js",
     "prisma": "node scripts/prisma.mjs",
     "seed:world-cup": "node scripts/seed-world-cup-2026.mjs",
+    "sync:results": "node scripts/sync-world-cup-results.mjs",
+    "sync:knockout": "node scripts/sync-knockout-bracket.mjs",
+    "test": "pnpm run build && node --test dist/lib/points.test.js dist/services/prediction.service.test.js",
     "lint": "biome check ."
   },
   "dependencies": {
