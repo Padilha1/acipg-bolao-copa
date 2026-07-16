@@ -15,6 +15,7 @@ const STAGES = [
   { phase: "round_16", label: "Oitavas" },
   { phase: "quarter", label: "Quartas" },
   { phase: "semi", label: "Semifinais" },
+  { phase: "third_place", label: "3º lugar" },
   { phase: "final", label: "Final" },
 ] as const;
 
@@ -337,7 +338,6 @@ export function KnockoutBracket({
   const visibleStages = STAGES.filter(
     (stage) => definedPhaseMatches(stage.phase).length > 0,
   );
-  const thirdPlace = definedPhaseMatches("third_place")[0];
 
   return (
     <section className="knockout-section">
@@ -364,12 +364,6 @@ export function KnockoutBracket({
           </section>
         ))}
       </div>
-      {thirdPlace ? (
-        <section className="third-place-card">
-          <h3>Disputa de 3º lugar</h3>
-          {renderMatchCard(thirdPlace)}
-        </section>
-      ) : null}
     </section>
   );
 }

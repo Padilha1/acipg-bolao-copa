@@ -18,6 +18,7 @@ const PHASE_TABS = [
   { phase: "round_16", label: "Oitavas" },
   { phase: "quarter", label: "Quartas" },
   { phase: "semi", label: "Semifinais" },
+  { phase: "third_place", label: "3º lugar" },
   { phase: "final", label: "Final" },
 ] as const;
 
@@ -86,7 +87,7 @@ export function MatchesPage() {
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [dayIndex, setDayIndex] = useState(0);
   const [activePhase, setActivePhase] =
-    useState<(typeof PHASE_TABS)[number]["phase"]>("round_32");
+    useState<(typeof PHASE_TABS)[number]["phase"]>("third_place");
   const hasAutoSelectedDay = useRef(false);
 
   const predictionByMatchId = useMemo(
